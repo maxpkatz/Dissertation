@@ -238,6 +238,20 @@ I used for the simulations in this work, but they were also wonderful resources
 for sounding off new ideas and figuring out how to implement many of the 
 algorithms I considered over the years.
 
+\textit{Please note that much of the material in this dissertation, especially in
+\autoref{sec:introduction}, \autoref{sec:methodology}, \autoref{sec:verification},
+and \autoref{sec:performance}, originally appeared in \cite{wdmergerI}. The content
+from \autoref{sec:burning} and \autoref{sec:collisions} contains draft content from
+a paper to be submitted to the Astrophysical Journal entitled ``White Dwarf Mergers on
+Adaptive Meshes. II. Collisions and Nuclear Burning'' (Max P. Katz, Michael Zingale,
+Alan C. Calder, F. Douglas Swesty, Ann S. Almgren, Weiqun Zhang, Frank X. Timmes).
+The content from \autoref{sec:mergers} contains draft content from a paper to be
+submitted to the Astrophysical Journal entitled ``White Dwarf Mergers on Adaptive
+Meshes. III. Inspiral and Coalescence'' (Max P. Katz, Michael Zingale, Alan C. Calder,
+F. Douglas Swesty, Ann S. Almgren, Weiqun Zhang).}
+
+
+
 \newpage
 \pagenumbering{arabic}
 \section{Introduction}
@@ -500,6 +514,9 @@ plan to do.
 \subsection{Gravity}
 \label{sec:gravity}
 
+\subsubsection{Boundary Conditions}
+\label{sec:gravity_boundary_conditions}
+
 \subsection{Rotation}
 \label{sec:rotation}
 
@@ -512,11 +529,41 @@ plan to do.
 \section{Simulation Software}
 \label{sec:software}
 
+\subsection{White Dwarf Models}
+\label{sec:initial_models}
+
+\subsection{Initial State}
+\label{sec:initial_state}
+
+\subsection{Analysis}
+\label{sec:analysis}
+
+\subsubsection{Gravitational Waves}
+\label{sec:grvatational_waves}
+
 
 
 \newpage
 \section{Verification Tests}
 \label{sec:verification}
+
+\subsection{Maintaining Hydrostatic Equilibrium}
+\label{sec:HSE}
+
+\subsection{Gravitational Free Fall}
+\label{sec:Gravitational Free Fall}
+
+\subsection{Galilean Invariance}
+\label{sec:galileo}
+
+\subsubsection{Kelvin-Helmholtz Instability}
+\label{sec:khi}
+
+\subsubsection{Moving Star}
+\label{sec:moving_star}
+
+\subsection{Keplerian Orbit}
+\label{sec:kepler}
 
 
 
@@ -530,11 +577,14 @@ plan to do.
 \section{White Dwarf Collisions}
 \label{sec:collisions}
 
-\subsection{Two-Dimensional Simulations}
-\label{sec:collisions_2D}
+\subsection{Parameter Study}
+\label{sec:collisions_parameters}
 
-\subsection{Three-Dimensional Simulations}
-\label{sec:collisions_3D}
+\subsection{Resolution Dependence}
+\label{sec:collisions_resolution}
+
+\subsection{Gravitational Wave Signature}
+\label{sec:collisions_gravitational_waves}
 
 
 
