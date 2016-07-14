@@ -997,7 +997,7 @@ the distance from that boundary point to the center of the domain. This does not
 for boundary points in the centers of domain faces, because of the material in the 
 domain corners. This can be fixed by using multiple mass shells at diferent radii, but the error 
 is negligible in practice for the values of $l_{\text{max}}$ that we use.
-\begin{figure}[h]
+\begin{figure}[h!]
   \centering
   \includegraphics[scale=0.875]{plots/bc_comparison}
   \caption[Error in potential from multipole boundary conditions]
@@ -1051,7 +1051,7 @@ model a spherical object on a rectangular grid. This results in two sources of e
 First, at very low resolution, the object does not look very spherical due to the rectangular 
 grid representation, so the potential it produces is not quite that of a sphere. 
 As the resolution is increased, the distribution of the mass on the grid will change.
-\begin{figure}[h]
+\begin{figure}[h!]
   \centering
   \includegraphics[scale=0.85,trim=0.075in 0.0in 0.7in 0.0in,clip]{plots/phi_comparison}
   \caption[Analytical versus numerical solution of the potential]
@@ -1637,23 +1637,741 @@ refine all of the way to the regime of guaranteed stability.
 \section{Verification Tests}
 \label{sec:verification}
 
+White dwarf merger simulations face a number of numerical difficulties,
+including the typical issues that make any numerical hydrodynamics simulation
+challenging, but also a number of difficulties that are
+not present in single-degenerate Type Ia and core-collapse supernova
+simulations.  Thus while the behavior of \castro\ for many standard hydrodynamics
+test problems was detailed in the original code paper \citep{castro}, and the code
+is regularly subjected to a battery of test problems that ensure it gives reasonable
+results, the usual suite of problems needs to be complemented by a set of tests
+that exercise the features unique to binary star systems. In \autoref{sec:gravity},
+we gave examples of how the gravity solver can affect such a system, for example
+through the boundary conditions on the potential and the way the gravitational source
+term is added to the hydrodynamics update. There are also hydrodynamical issues that
+are specific to the case where large amounts of material move at significant speeds
+across the grid, and the merger process is just such a case. This bulk motion presents
+an opportunity for advection errors to build up, and is only partially mitigated by
+evolving the white dwarfs in a co-rotating frame. It is therefore important to be
+aware of the behavior of the code in such circumstances.
+
+So our focus here is on a subset of problems that highlight the special difficulties
+introduced in merger simulations. These problems couple the hydrodynamics, gravity and
+equation of state modules. We observe that while in most non-trivial
+three-dimensional problems this creates a complexity that makes it
+impossible to determine exact analytical solutions, it is
+straightforward to devise problems for which certain global properties
+should obey simple, expected behaviors. Where possible, these should
+be quantified and a convergence study performed; where not, we should at least
+be able to run the test and see whether the results make sense given what
+we know about the properties of the system. We should also at least be able
+to see whether the results converge with numerical resolution (even if we cannot
+see whether this convergence is to the correct answer for the problem).
+This is the focus of the current section.
+
 \subsection{Maintaining Hydrostatic Equilibrium}
 \label{sec:HSE}
+
+In \autoref{sec:initial_models} we describe the process by which
+we generate initial stellar models. While the 1D models are in
+hydrostatic equilibrium to within a small error, interpolation onto
+the 3D Cartesian grid will introduce perturbations into the solution
+\citep{zingale:2002}. Although we ensure that the initial models are
+generated with the same equation of state and are at least as well resolved as
+our finest grid, there is still be a hydrodynamical error associated
+with the fact that the rectangular grid cannot faithfully represent a
+spherical star. Additionally, the gravitational potential obtained by
+the multigrid solver will differ slightly from the one assumed by the
+initial model, and the operator splitting between the gravity and
+hydrodynamics should also result in small errors. As a result, we
+expect that the star will oscillate slightly about an equilibrium
+point, but that the amplitude of this oscillation should decrease with
+increasing resolution.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.15in 0.0in 0.55in 0.5in,clip]{plots/single_star_static_1e3_radius}
+  \caption[Effective radius evolution of a static white dwarf]
+          {Time evolution of the effective radius of a $0.9 \msolar$ 
+           white dwarf, seeded onto the grid using a one-dimensional hydrostatic
+           model and evolved without further relaxation. The lines represent 
+           different number of zones per spatial dimension; when this number is 
+           greater than 256, it represents an effective resolution obtained 
+           using AMR levels that cover the star. The radius is determined 
+           using the volume of the grid that has a density greater than $10^3\ \text{g cm}^{-3}.$
+           \label{fig:single_star_static_radius}}
+\end{figure}
+
+This problem was studied in the first \castro\ paper, but is worth
+revisiting here. A single star explosion simulation may only last a
+couple of seconds, and the \castro\ paper studied the behavior of the
+star after one second of evolution. However, the dynamical timescale
+of a typical carbon-oxygen white dwarf is on the order of 1--10
+seconds. Additionally, a binary orbit is typically on the order of
+10--100 seconds when a merger simulation starts, and with equilibrium
+initial conditions the system may survive for tens of orbits before
+the secondary is disrupted. When this does happen, we want to be
+confident that it was because of the dynamics of the merger process
+and not because of an instability in an individual star. Our goal here
+is thus to install a single star onto our three-dimensional
+coordinate grid and evolve it for a period of time long enough to
+assess whether the star is truly stable, and to probe how the size of
+deviation from equilibrium is affected by grid resolution.
+
+We loaded a single star of mass $0.9\ \msolar$ onto the grid at the
+origin, and evolved it for 200 seconds. Our diagnostic of choice is
+the effective radius of the star, determined by the volume of the grid
+that has a density greater than $10^3\ \text{g cm}^{-3}$ (see
+\autoref{sec:software} for details on this measure). This choice
+of density is intended to mark a reasonable outer edge to the star
+that is not immediately susceptible to the numerical errors prevalent
+near the physical edge of the star.
+\autoref{fig:single_star_static_radius} shows our results at various
+resolutions.  As expected, the star quickly approaches an equilibrium
+size that is different (and in this case larger) than the
+one-dimensional model, though the magnitude of this change becomes
+smaller with resolution. The star is only approximately in equilibrium 
+by this measure when the coarse grid of $256^3$ zones has a level of 
+refinement that jumps by a factor of four. Even then there is a slight uptick
+in the size toward the end, implying that the numerical stability is
+not guaranteed for arbitrarily long timescales. For another view, we 
+consider the kinetic energy on the grid, in \autoref{fig:single_star_static_ke}. 
+This is a more holistic measure that weights the contribution by the density. 
+At the end of the simulation the kinetic energy is not lower at the highest 
+resolution than at the lower resolutions. This result suggests
+that when constructing the equilibrium initial models that will form the
+basis of later calculations, we should carefully monitor the evolution
+of the stars when applying any artificial damping to cause the
+merger, to ensure that the merger is due to this applied force and not
+the intrinsic numerical instability of the stars.
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.80,trim=0.1in 0.0in 0.55in 0.45in,clip]{plots/single_star_static_ke}
+  \caption[Kinetic energy evolution of static white dwarf]
+          {Time evolution of the kinetic energy of a $0.9\, \msolar$ 
+           white dwarf. The lines have the same meaning as in \autoref{fig:single_star_static_radius}.
+           \label{fig:single_star_static_ke}}
+\end{figure}
 
 \subsection{Gravitational Free Fall}
 \label{sec:Gravitational Free Fall}
 
+A simple dynamical test to verify the coupling between the gravity and hydrodynamics in \castro\ is
+the case of gravitational free fall. We place two stars on the grid 
+in the manner of \autoref{sec:software}. The distance $a$ between 
+them corresponds to a chosen orbital period $T$, consistent with the total
+system mass $M$, but we disable the rotational source terms so that 
+the stars start at rest in an inertial reference frame. 
+Thus the stars will simply begin moving toward each other.
+As long as the stars remain approximately spherical, the stars can be 
+treated as point masses (this approximation only seriously breaks down after the stars
+have come into contact). In dimensionless units where $r \to r / a$ and 
+$t \to 2\sqrt{2}\pi t / T$, the simple free fall equation of motion governing the
+distance $r$ between their centers of mass takes the form:
+\begin{equation}
+  \ddot{r}(t) = - \frac{1}{2r^2}.
+\end{equation}
+It is possible to derive a closed-form solution for the evolution time
+as a function of separation by starting with the integral formulation,
+\begin{equation}
+  t(r) = \int_{1}^{r} \frac{dr}{v(r)}.
+\end{equation}
+The velocity $v$ (in dimensionless units) can be found by noting that 
+$\ddot{r} = v\, dv / dr$ and then separating and integrating the equation 
+of motion. This yields 
+\begin{equation}
+  v(r) = \sqrt{\left(\frac{1}{r} - 1\right)}.
+\end{equation}
+For our problem $0 < r \leq 1$, so this is always valid. Integrating, we find
+\begin{equation}
+  t(r) = \text{arccos}\left(\sqrt{r}\right) + \sqrt{r \left(1 - r\right)}. \label{analyticalFreeFall}
+\end{equation}
+so that the point of contact would occur at $t = 1$. We actually stop the simulation
+at $t = 0.9$, which is when the effects from the extended sizes of the stars
+starts to become important. The results of our simulation for our default $256^3$ zone 
+uniform grid are shown in \autoref{fig:freefall}. They show excellent agreement
+between the analytical solution and the simulation results.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.80,trim=0.3in 0.0in 0.8in 0.5in,clip]{plots/freefall}
+  \caption[Gravitational free-fall test]
+          {Time evolution of two initially stationary white dwarfs,
+           mutually attracted to each other by the gravitational force. The
+           horizontal axis gives the separation of the white dwarfs, scaled
+           to the initial separation, and the vertical axis gives the elapsed
+           time of the simulation, scaled to the time it would take two point masses
+           to collide. The solid curve shows the analytical result,
+           calculated from Newtonian mechanics, and the circles show the
+           samples from the time evolution with \castro. For visual clarity, we 
+           show only a small fraction of the timesteps.\label{fig:freefall}}
+\end{figure}
+
 \subsection{Galilean Invariance}
 \label{sec:galileo}
+
+It is often stated in the literature that Eulerian methods for
+hydrodynamics with grids fixed in space do not obey the Galilean
+invariance of the underlying Euler equations, so that simulations
+moving at a uniform bulk velocity appear different than an
+equivalent stationary simulation (e.g. \cite{arepo}). If true, we need to understand 
+the importance of this effect when deciding whether to trust the 
+output of a code like \castro\ when applied for merger problems.
+Recently, concern for the issue of Galilean invariance has come up in two ways which are of note for us 
+in the present study. We explain these situations and display 
+the results of tests we have run to determine whether this 
+actually is a significant concern for our study.
+
+\citet{arepo} (hereafter, S10) performed a Kelvin-Helmholtz instability test and showed
+that (at low resolution) a fixed-grid code failed to develop the
+expected fluid instability when the whole fluid was moving at a
+strongly supersonic uniform velocity. (See also \citet{wadsley:2008}, 
+who used the FLASH code to simulate a hot bubble subject to mixing 
+by the Kelvin-Helmholtz instability, and also found that the mixing was affected by a 
+uniform bulk velocity.) This contrasted with the results
+of the moving-mesh code AREPO being presented in that study, which
+demonstrated Galilean invariance even at large bulk velocities. 
+Inability to correctly model the Kelvin-Helmholtz instability would 
+have important consequences for how much we can trust the ability of 
+\castro\ to test the violent merger progenitor model, where a detonation 
+arises in the low-density material at the stellar surface. Shearing between 
+the material flowing out of the secondary and material near the 
+surface of the primary may trigger fluid
+instabilities that play an important role in the evolution of that
+gas, which is the site of the initial detonation in the prompt
+explosion model. \citet{guillochon:2010} showed for their simulation
+that Kelvin-Helmholtz instabilities produced this way may raise the
+temperature of the accreting material enough to ignite a
+detonation. Therefore if we are not correctly reproducing the
+characteristics of the Kelvin-Helmholtz instability in the case where
+there is significant mass motion on the grid, we cannot be confident
+that a detonation (or lack thereof) is not numerically
+seeded. 
+
+\citet{robertson:2010} (hereafter, R10) observe that violation of Galilean
+invariance of simulation results for the Euler equations occurs 
+because of truncation error in the discretization of the fluid
+equations. This takes the form of a numerical diffusion term which is
+dependent on velocity (and also resolution). The advantage of a
+moving-mesh code is that the mesh everywhere moves with the local flow
+velocity, which substantially reduces the numerical
+diffusion. R10 argue that the differences seen
+between the moving-mesh and fixed-grid code are caused by the
+interaction of this numerical diffusion with small-scale instabilities
+(that may be physical or numerical) which couple with and
+fundamentally alter the large-scale modes. Small-scale instabilities
+are seeded by the choice of a sharp initial discontinuity between the 
+fluids in the problem posed by S10. Crucially though,
+R10 point out that this problem does not
+converge with resolution (because the initial perturbation is too sharp 
+and seeds numerical noise at the grid resolution level) 
+and so it is not possible to know the correct
+behavior of this problem. As such, we do not know whether the
+small-scale modes found in AREPO are real, and the problem is not
+useful in formally discriminating between methodologies. They instead
+propose an alternate test with a smoother initial contact. This
+converges to the same solution qualitatively in both the stationary
+and bulk velocity cases, indicating that the code does generally
+maintain Galilean invariance (to some specified error that depends on
+resolution and the uniform flow speed).  We will see whether we can
+reproduce this result.
+
+A related question is whether our code reliably simulates the bulk
+motion of the stars across the grid, and whether such bulk motion
+affects the stability of the star. This concern is prompted by the
+study of \cite{tasker:2008}, who studied the effect of uniform
+translation on the stability of a spherically symmetric model for a
+galaxy cluster. They compared the radial profile of the cluster at
+initialization and after a period of time evolution. Using FLASH and
+ENZO, they found that a static cluster retains its shape at high
+enough resolution, while uniform translation of the cluster causes
+mixing of the core material due to numerical diffusion which results
+in an underestimation of the core's true density. The SPH codes they
+used did a better job maintaining the core density. We will perform a
+variant of this test using white dwarf models.
 
 \subsubsection{Kelvin-Helmholtz Instability}
 \label{sec:khi}
 
+Following \cite{robertson:2010}, we set up a Kelvin-Helmholtz test in
+the following way. The problem domain runs from 0 to 1 in both the $x$
+and $y$ directions. This is a two-dimensional test, so we run
+\castro\ in 2D mainly to avoid extra computational expense; in 3D, it 
+would merely involve replicating the problem in the $z$ direction.
+The problem involves a fluid slab of density $\rho_2 = 2.0$ traveling rightward in the
+$x$-direction at velocity $v_2 = 0.5$, sandwiched by a fluid of
+density $\rho_1 = 1.0$ traveling leftward at velocity $v_1 =
+-0.5$. The density gradient is in the $y$ direction, so this creates a
+velocity shear along the interface between the fluids. The density and
+velocity distribution on the computational domain are given by:
+
+\begin{figure}[h!]
+  % Note that since we have periods in the filename, we need to double-
+  % bracket the filename so that includegraphics doesn't think it's 
+  % looking for something with the wrong extension. See:
+  % http://tex.stackexchange.com/a/10575
+  \centering
+  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p2_low_res_collage}}}
+  \caption[Kelvin-Helmholtz instability and bulk velocity (Robertson et al.)]
+          {2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
+           conditions given by \autoref{eq:kh_ic_b_ramp} and \autoref{eq:kh_ic_b}. 
+           The rows each represent a different bulk fluid velocity $v$ and 
+           the columns each represent a grid resolution $n$ (the number of 
+           zones per spatial dimension). The highest velocity simulation, 
+           $v=100$, corresponds to approximately Mach 70. Compare to 
+           Robertson et al. (2010), Figure 7. \label{fig:kh_p2}}
+\end{figure}
+
+\begin{align}
+  \rho &= \rho_1 + R(y)\left[\rho_2 - \rho_1\right] \\
+  v_x  &= v_1 + R(y)\left[v_2 - v_1\right] \\
+  v_y  &= v_{\text{bulk}} + v^\prime
+\end{align}
+
+Here $R(y)$ is a ramp function that describes the transition between
+the two fluids, while $v_{\text{bulk}}$ is the bulk motion of the
+fluid in the $y$ direction and $v^\prime$ is the velocity perturbation
+that seeds the instability. The problem is established for two
+sets of initial conditions (ICs), which we follow
+R10 in calling ICs A and B. They differ in
+their ramp function ($R_A$ and $R_B$ respectively), as well as the
+initial perturbation ($v^\prime_A$ and $v^\prime_B$ respectively), and
+the frequency of the perturbation ($n_A = 4$ and $n_B = 2$):
+\begin{align}
+  R_A &= \begin{cases} 0 & |y - 0.5| > 0.25 \\ 1 & |y - 0.5| < 0.25 \end{cases} \label{eq:kh_ic_a_ramp}\\
+  R_B &= \Big\{\left[1 + e^{-2(y-0.25)/\Delta y}\right]\left[1 + e^{2(y-0.75)/\Delta y}\right]\Big\}^{-1} \label{eq:kh_ic_b_ramp}
+\end{align}
+\begin{align}
+  v^\prime_A &= w_0\, \text{sin}\left(n_A\, \pi\, x\right) \left\{e^{-(y-0.25)^2 / 2\sigma^2} + e^{-(y-0.75)^2/2\sigma^2}\right\} \label{eq:kh_ic_a}\\
+  v^\prime_B &= w_0\, \text{sin}\left(n_B\, \pi\, x\right). \label{eq:kh_ic_b}
+\end{align}
+Here $w_0 = 0.1$ is the scale of the velocity perturbation, $\sigma =
+0.05/\sqrt{2}$ controls the width of the Gaussian for IC A, and
+$\Delta y = 0.05$ is the transition distance scale for the smooth ramp of IC
+B. The pressure everywhere is set to $p = 2.5$, and we run this with a
+gamma-law equation of state set to $\gamma = 5/3$. Plotfiles are
+generated every 0.05 seconds, and the problem is run until $t = 2$.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p3_low_res_collage}}}
+  \caption[Kelvin-Helmholtz instability and bulk velocity (McNally et al.)]
+          {2D Kelvin-Helmholtz instability test at $t = 2.0$ for the initial 
+           conditions given by \autoref{eq:kh_p3_rho} through \autoref{eq:kh_p3_vy},
+           which come from McNally et al. (2012).
+           The meaning of the rows and columns is the same as in \autoref{fig:kh_p2}.
+           \label{fig:kh_p3}}
+\end{figure}
+
+We run the problem for $v_\text{bulk} = [0, 1, 3, 10, 30, 100]$, and
+for each set of initial conditions run the problem at resolutions of
+$64^2$, $128^2$, $256^2$, $512^2$. For context, in these units the 
+sound speed is $c\approx 0.7$. In addition, for each initial
+condition we run simulations at the higher resolutions of $1024^2$,
+$2048^2$, and $4096^2$ for the stationary problem only. These serve 
+as a reference solution to gauge the extent to which the bulk flow 
+affects the development of the fluid instability, and to determine 
+if the problem is numerically converged.
+
+We find the same result as R10 for IC A, which is equivalent to the 
+test proposed by S10: at low resolutions and high bulk velocity, the 
+Kelvin-Helmholtz instability completely fails to develop. Furthermore 
+the problem does not converge even qualitatively at the highest 
+resolutions we used. Our results are very similar to Figure 3 of 
+R10 so we do not show them here. For IC B, our results can be seen 
+for the normal resolutions and all velocities in \autoref{fig:kh_p2}.
+At low resolutions and very large bulk velocities, the fluid 
+does get significantly disrupted by numerical error. This 
+effect quickly converges away with resolution and qualitatively 
+at $512^2$ resolution the solution is nearly identical to the stationary 
+$v=0$ problem. We agree with R10 that this problem does converge 
+with resolution and is not subject to numerically-seeded secondary 
+instabilities at the stopping time. This is evident even at low resolutions
+by examining the first row of \autoref{fig:kh_p2}.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[trim = 0in 1.25in 0.25in 1.25in, clip, scale=0.6]{{{plots/kh_p3_high_res_collage}}}
+  \caption[High-resolution Kelvin-Helmholtz instability]
+          {Time series of the Kelvin-Helmholtz problem proposed by McNally et al. (2012)
+           as the simulation is just starting to go non-linear. The rows represent resolution, 
+           where $n$ is the number of grid cells per spatial dimension, and the columns are 
+           different snapshots in time.\label{fig:kh_p3_high_res}}
+\end{figure}
+
+\citet{mcnally:2012} published another Kelvin-Helmholtz problem that 
+is well-posed in the sense that it converges with resolution and 
+is not subject to uncontrollable numerical instabilities. Though they 
+were not explicitly interested in the question of Galilean invariance, 
+we visit that issue here to see what can be learned. The initial 
+conditions for this problem are:
+\begin{align}
+  \rho &= \begin{dcases} \rho_1 - \rho_m e^{(y-0.25)/\Delta y} & 0.25 > y \geq 0 \\ 
+                         \rho_2 + \rho_m e^{(0.25-y)/\Delta y} & 0.5 > y \geq 0.25 \\
+                         \rho_2 + \rho_m e^{(y-0.75)/\Delta y} & 0.75 > y \geq 0.5 \\
+                         \rho_1 - \rho_m e^{(0.75-y)/\Delta y} & 1 > y \geq 0.75 \end{dcases} \label{eq:kh_p3_rho}
+\end{align}
+\begin{align}
+  v_x &= \begin{dcases} v_1 - v_m e^{(y-0.25)/\Delta y} & 0.25 > y \geq 0 \\
+                        v_2 + v_m e^{(0.25-y)/\Delta y} & 0.5 > y \geq 0.25 \\
+                        v_2 + v_m e^{(y-0.75)/\Delta y} & 0.75 > y \geq 0.5 \\
+                        v_1 - v_m e^{(0.75-y)/\Delta y} & 1 > y \geq 0.75 \end{dcases} \label{eq:kh_p3_vx} \\
+  v_y &= w_0\, \text{sin}\left(4\pi x\right). \label{eq:kh_p3_vy}
+\end{align}
+Here $\Delta y = 0.025$, $w_0 = 0.01$, $v_m = (v_1 - v_2) / 2$, $\rho_m = (\rho_1 - \rho_2) / 2$, 
+and the other symbols have the same meaning as above (this means the flow direction
+is reversed compared to the original paper, so as to achieve consistency with the 
+other simulations presented here). We run this problem at all the same resolutions 
+and bulk velocities as the previous two problems. The results for the normal resolutions 
+at $t = 2.0$ are displayed in \autoref{fig:kh_p3}. We see a similar pattern as for 
+the test proposed by R10: as we get to higher flow speeds we need to have higher 
+spatial resolution to compensate for the increased numerical diffusion. The 
+qualitative accuracy is much lower for the highest bulk velocities for this problem
+than for the previous problems. This is because the amplitude of the instability overall
+is smaller than for the previous problems, at least by $t = 2.0$, so it is easier
+for numerical diffusion at the shearing layer, caused by the high bulk velocities,
+to completely wipe out the instability. Like \citet{robertson:2010} found for
+their problem, we find for this problem that the convergence properties are not
+substantially affected by altering the perturbation frequency -- the results
+show the same qualitative pattern even if we halve this frequency.
+
+\citet{hopkins:2015} performed this test as part of the testing of
+their code GIZMO.  They showed the late-time evolution of this system,
+when non-linear effects have taken over and significantly disrupted
+the initial flow. At low resolution the tested grid algorithm
+had failed to disrupt both for $v = 0$ and $v = 10$. We too ran this
+problem until $t = 10$, and confirm that the Kelvin-Helmholtz
+instability damps out at low resolution but goes strongly non-linear
+and disrupts the flow at high resolution.  We strongly
+emphasize the point that this does not objectively demonstrate a
+deficiency in fixed-grid codes for this problem. We can only determine
+the validity of a method when we have a trustworthy, converged
+solution to compare to, and this is lacking for this problem at late
+times. As observed by \citeauthor{mcnally:2012}, this lack of a solution is because the
+secondary instabilities form for this problem when the whorls of the
+Kelvin-Helmholtz tendrils stretch out and create gradients that
+approach the grid resolution. This is prime breeding ground for
+numerical noise. But because the nature of this noise depends on
+the resolution, it is very different for simulations at different
+resolutions. If these instabilities are seeded because of this
+resolution-dependent noise and are not seeded instead in a controlled
+manner such that they appear at the same time and location, then we
+simply cannot draw any conclusions that bear on the question of
+verification from this test at late times.
+\autoref{fig:kh_p3_high_res} provides a sense of this by examining the
+crucial time at which the transition from the linear to the non-linear
+regime is occurring.  At all of these very high resolutions the
+secondary instabilities develop, but they occur at different times and
+have different spatial scales for each resolution.
+
+We conclude that large bulk motions of fluid can have very significant effects 
+on numerical calculations of shear mixing in fixed-grid codes, but that this effect 
+diminishes with increasing resolution. As a result, we must be confident that we are 
+sufficiently resolving the major mixing regions on the white dwarf surfaces,
+specifically that the density gradients occur over spatial scales much larger
+than the grid resolution. If we find instead that this mixing occurs near the
+grid resolution scale, this will imply that we need to ramp up the resolution
+in these regions using AMR. If this becomes too expensive, we would need to be
+skeptical of any conclusions that could be drawn 
+about the effect of the mixing on the nuclear burning.
+
 \subsubsection{Moving Star}
 \label{sec:moving_star}
 
+To analyze the effects of velocity-dependent results for a stellar simulation, we repeated the
+test of \autoref{sec:HSE} with a bulk velocity on the grid. We chose a
+velocity of $2.56 \times 10^{8}\ \text{cm s}^{-1}$. For context, this is 
+comparable to the orbital velocities of the stars in \autoref{sec:kepler}, and the Mach
+number is of order unity in the stellar core at this speed.  This test
+was inspired by \citet{tasker:2008}, who considered a moving galaxy
+cluster and who obtained a long timescale evolution by using
+periodic boundary conditions, so that the cluster would cross the
+domain multiple times throughout the evolution.  We believe that
+periodic boundary conditions are unrealistic for our type of
+simulation, so we prefer to do one continuous simulation where the
+star does not cross the boundaries.  Since our normal grid was not
+large enough to allow the motion to continue for very long, we
+expanded the domain size by a factor of four, and then included an
+extra refined level around the star to keep the effective resolution
+the same. We started the star off in the lower left corner of the
+domain, and pointed its velocity towards the upper right
+corner. This allowed us to evolve the star for the same length of
+time as for the original test. We note that getting the gravity
+boundary conditions right required us to move the origin of the
+problem at the bulk velocity, so that the multipole moments were
+always computed with respect to the current location of the stellar center.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.6in 0.6in,clip]{plots/single_star_compare_1e3_radius}
+  \caption[Moving star versus static star]
+          {A variation on \autoref{fig:single_star_static_radius} where
+           we now compare the ``static'' case to ``motion'' simulations where the 
+           star moves across the grid at a fixed linear speed. The lines represent 
+           the effective number of zones per dimension inside the stellar material;
+           due to the expanded size of the grid in the ``motion'' case, the 
+           physical resolution is the same in each column in the legend.
+           \label{fig:single_star_compare_radius}}
+\end{figure}
+
+In \autoref{fig:single_star_compare_radius}, we take the results of
+\autoref{sec:HSE} (the ``static'' case), and plot on top of it the
+results of this new simulation (the ``motion'' case). We see
+immediately that this bulk velocity causes the star to be much worse
+at maintaining hydrostatic equilibrium. Not only is the absolute size
+of the star significantly larger (nearly a factor of two at the lowest
+feasible resolution we consider), but also there is a clear upward
+trend in the size that has not terminated at any resolution by the end
+of the simulation.  This again emphasizes the results mentioned
+earlier, that we must be careful not to trust any simulation with
+significant mass transfer if we are not confident that the mass
+transfer is seeded in a controllable manner and free from numerical
+noise.
+
 \subsection{Keplerian Orbit}
 \label{sec:kepler}
+
+We now consider the phase of the binary system where the stars are orbiting each other 
+at distances great enough that the initial orbits should be approximately Keplerian. 
+There are a number of effects worth looking into here. For simplicity, we choose two 
+cases to demonstrate the simulation behavior: an equal mass case of two $0.9\ \msolar$ 
+white dwarfs, and an unequal mass case of $0.9\ \msolar$ and $0.75\ \msolar$ white dwarfs.
+In both systems, the secondary should be stable against mass loss.
+In each case, the initial orbital period is 100 seconds.
+
+For some of the algorithms described earlier in this work, a single orbit of these 
+systems is enough to examine their effects. In \autoref{sec:gravity_boundary_conditions},
+we discussed the replacement of a monopole boundary condition solver for the gravitational 
+potential with a more general multipole solver for the boundaries. To test the relevance 
+of this effect, we considered a single orbit of the unequal mass system and measured 
+the distance between the two white dwarf centers of mass at the beginning of the simulation and after 
+the full orbital period. This distance should not change significantly over that timescale.
+We performed this test for maximum multipole moments ranging from 0 (the monopole term) to 16.
+The results are shown in \autoref{fig:gravity_bcs}. Terms in the boundary potential 
+that vary faster than $r^{-5}$ are effectively negligible in determining the outcome of the orbit, 
+justifying our typical choice of maintaining terms up to $r^{-7}$.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.65in 0.4in,clip]{plots/gravity_bcs}
+  \caption[Distance change due to multipole boundary conditions]
+          {Absolute magnitude of the relative change in the distance of two unequal mass white dwarfs after one orbital period. 
+           The stars were evolved in an inertial reference frame. The horizontal axis is the number of terms or multipole moments 
+           captured in the series expansion for the potential at the domain boundary.\label{fig:gravity_bcs}}
+\end{figure}
+
+Another diagnostic that we consider is the energy conservation of the
+system. Recalling \autoref{sec:gravity_hydro_coupling}, there are
+several different methods of applying the gravitational source term to
+the hydrodynamics equations. In \castro\ we presently have four
+options, controlled by the parameter {\tt castro.grav\_source\_type},
+which we shorten to {\tt gs} for the present discussion. 
+${\tt gs} = 1$ and ${\tt gs} = 2$ are variations on the standard 
+cell-centered source term for gravity. The difference between them is that 
+${\tt gs} = 2$ determines the value of the energy source term after the momentum
+source term has been applied, while ${\tt gs} = 1$ uses the uncorrected
+momenta in calculating $\rho \mathbf{u} g$. We have found ${\tt gs} = 2$ to be
+more accurate. ${\tt gs} = 3$ is entirely different: after calculating
+the new momenta, we reset the total energy to be equal to the internal
+energy plus the kinetic energy. This approach has the virtue of ensuring that
+there is no conflict due to discretization between the momentum and
+energy equations, and also correctly ensuring that the gravitational
+force does not directly change the internal energy---and thus the
+temperature---of the fluid. However, it explicitly sacrifices total
+energy conservation. ${\tt gs} = 4$ is the new conservative method of
+evaluating the energy source terms at cell faces. The results for the
+change in energy after a single orbit are seen in the first column of
+\autoref{table:sources}. The first two versions give reasonable and
+similar levels of energy conservation. The third has total energy
+changes on the order of 100\%, but this itself does not have a severe
+effect on the dynamics because in this scheme the total energy
+variable is effectively a placeholder value of the kinetic energy plus
+internal energy, rather than being evolved directly. The last scheme
+is nearly two orders of magnitude better in energy conservation,
+justifying the effort in varying the scheme.
+
+In \autoref{table:sources} we show also the effects on energy conservation of using the inertial reference frame. 
+We use ${\tt rs}$ for the \castro\ parameter {\tt castro.rot\_source\_type}.
+Each option for ${\tt rs}$ is implemented in the same way as for
+the gravitational source term, simply swapping out the gravitational acceleration
+for the rotational acceleration (except for the improvement to the momentum update
+for ${\tt rs} = 4$ described in \autoref{sec:rotation}). 
+The ${\tt rs} = 0$ column means that rotation is turned off and we are 
+in the inertial frame. We see that the choice of rotational coupling is much less important than the choice of gravity coupling. 
+The ``conservative'' ${\tt rs} = 4$ is slightly better in energy conservation than the non-conservative, 
+cell-centered ${\tt rs} = 2$ algorithm, but it is a small effect.
+
+\input{plots/sources.table}
+
+We are most interested in the stability of these systems over long
+timescales. To this end, we consider the same systems as above, but
+evolve them for 25 orbital periods. In
+\autoref{fig:circular_orbit_comparison} we illustrate the evolution of
+these systems by plotting the center of mass locations of the white
+dwarfs on the orbital ($xy$) plane. For the equal mass case in the
+inertial reference frame, the curves fall nearly on top of each
+other for most of the run, indicating that the stars are indeed 
+orbiting at the initial distance, at least for a while. Towards the end 
+of the run, however, the orbit starts to decay significantly, and the center-of-mass
+distance of the two stars has decreased by about 10\% after 25 orbits.
+We attribute this to non-conservation of angular momentum, which occurs 
+because our code only explicitly conserves linear momentum. This orbital 
+decay resembles the effect seen by \citet{swc:2000} for the case of neutron stars. 
+In the unequal mass case, the magnitude of the orbital decay is smaller but 
+at the end of the run the secular decline in distance is also visible. In 
+both cases the stars would likely merge due to numerical error 
+after a long enough timescale.
+
+The co-rotating frame is different.  For clarity of visualization, we
+rotate these results back into the inertial frame before displaying
+their orbits.  In both the equal and unequal mass cases, the centrifugal force 
+pushes the stars outward toward a new equilibrium distance that is a few 
+percent larger than its initial distance. At the end of the run, the system is 
+relatively stable, with oscillations about the new equilibrium distance. In fact 
+these oscillations occur too in the inertial frame, but they are much more pronounced 
+here. In the unequal mass case this is coupled with severe precession of the orbit, 
+which results in chatoic-looking orbits when viewed from the rotating reference frame. 
+These result from the explicit numerical consideration of the Coriolis and centrifugal 
+terms, which do not appear in the inertial frame. So while the rotating frame 
+is clearly more stable against mass transfer than the inertial frame,
+the cost is that the specific dynamics may be more suspect.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.0in,clip]{plots/circular_orbit_comparison}
+  \caption[White dwarf positions over 25 orbital periods]
+          {Positions of the white dwarfs in the orbital plane for four
+           cases evolved over 25 orbital periods.  The $x$ and $y$ axes are
+           normalized to the size of the domain, so that $x = -0.5$ is the
+           left edge and $x = 0.5$ is the right edge. The dashed blue curve
+           is the position of the primary white dwarf, and the solid red
+           curve is the position of the secondary. In plot (a) we have the
+           equal mass system evolved in the inertial reference frame, and in
+           plot (c) we have the same system evolved in a rotating frame,
+           where the positions have been transformed back to the inertial
+           frame for comparison.  Plots (b) and (d) are analogous but for the
+           unequal mass system.\label{fig:circular_orbit_comparison}}
+\end{figure}
+
+Turning to the conservation properties of the system, we examine as
+fairly typical cases the equal mass system in the inertial frame for
+energy conservation (\autoref{fig:energy_conservation_equal}), and the
+unequal mass system in the rotating frame for angular momentum
+conservation (\autoref{fig:angular_momentum_conservation_unequal}).
+For the former system angular momentum is conserved to within 10 percent over the 25
+orbits, while energy conservation is about an order of magnitude
+better. We note that while this is already a fairly good level of
+energy conservation, it is not nearly as good as the results of
+\citet{marcello:2012}. This is because we reset the internal energy to
+a level corresponding to our temperature floor when it goes negative,
+while \citeauthor{marcello:2012} do not reset and instead ignore the
+internal energy if it is negative. The resets impose an artificial
+floor on our ability to conserve energy, but they only happen in
+low-density regions and do not much affect the large-scale dynamics.
+Meanwhile, relative angular momentum conservation is not quite as good 
+as relative energy conservation.  This is 
+linked to the decline (or increase) in the size of the orbit. This
+implies that we ought to be careful in concluding that at these
+moderate resolutions we can safely evolve systems for many dozens of
+orbits; this needs to be verified to ensure that an observed inspiral
+and merger is physically (not numerically) motivated.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.1in,clip]{plots/equal_energy_rot0}
+  \caption[System energy over 25 orbital periods]
+          {Absolute magnitude of the relative change in energy of two equal mass white dwarfs through 25 orbital periods,
+           evolved in an inertial reference frame. The decline and recovery is a change in sign of the energy difference.
+           \label{fig:energy_conservation_equal}}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.1in,clip]{plots/unequal_angular_momentum_rot1}
+  \caption[System angular momentum over 25 orbital periods]
+          {Absolute magnitude of the relative change in angular momentum of two unequal mass white dwarfs after 25 orbital periods, 
+           evolved in a co-rotating reference frame. We consider only the component of the angular moment along the rotational 
+           axis.
+           \label{fig:angular_momentum_conservation_unequal}}
+\end{figure}
+
+As a simple verification test to ensure our gravitational wave calculations are correct, we plot the 
+gravitational wave strain along the rotation axis for the first two periods of an unequal mass system. 
+At this early time the orbit is circular and so to a good approximation we expect that the gravitational 
+wave signal should be that of two point masses, whose positions are:
+\begin{align}
+  \mathbf{r}_P(t) &= -a_P\, \text{cos}(\omega t) \hat{x} - a_P\, \text{sin}(\omega t) \hat{y} \\
+  \mathbf{r}_S(t) &= a_S\, \text{cos}(\omega t) \hat{x} + a_S\, \text{sin}(\omega t) \hat{y}.
+\end{align}
+Then the mass distribution is $\rho(\mathbf{r}) = M_P\, \delta^3(\mathbf{r} - \mathbf{r}_P) + M_S\, \delta^3(\mathbf{r} - \mathbf{r}_S)$.
+From this it is straightforward to calculate the quadruopole tensor, take its second time derivative, and then apply the 
+projection operator to get the gravitational wave polarizations along the rotation axis:
+\begin{align}
+  h_+ &= -4\frac{G\mu}{c^4 r}\left[G M_{\text{tot}} \omega \right]^{2/3}\, \text{cos}(2\omega t) \\
+  h_\times &= -4\frac{G\mu}{c^4 r}\left[G M_{\text{tot}} \omega \right]^{2/3}\, \text{sin}(2\omega t).
+\end{align}
+$\mu$ is the reduced mass, while $M_{\text{tot}}$ is the total mass. From this we see that the 
+gravitational wave frequency is twice the orbital frequency, and that the two polarizations 
+are out of phase by $90^\circ$ in time. We compare this analytical expectation to the 
+numerical results in \autoref{fig:gw_strain}. We find very good agreement in this case, and this 
+level of agreement holds in the rotating frame as well.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.2in,clip]{plots/unequal_gw_rot0}
+  \caption[Gravitational wave strain test]
+          {Gravitational wave strain polarizations for the first two orbital periods of an 
+           unequal mass system. The curves with markers are the numerical data, while the 
+           curves without markers are the analytical results for two point masses.\label{fig:gw_strain}}
+\end{figure}
+
+Finally we consider whether the dynamical behavior of the system converges with resolution. 
+In \autoref{fig:unequal_spatial_convergence_inertial} we plot the first full orbit for 
+the unequal mass system, at three different resolutions in the inertial frame: our default 
+resolution of $256^3$ zones, as well as a single level of refinement with a jump by a factor of 
+two (effective resolution $512^3$) or a jump by a factor of four (effective resolution $1024^3$). 
+It is clear that at the latter resolution (corresponding to physical resolution of 100 km), 
+we have achieved convergent behavior. In the rotating frame, the results also show
+convergent behavior but the convergence is not as fast with resolution as in the inertial frame; 
+see \autoref{fig:unequal_spatial_convergence_rotating}. At the two higher resolutions the white dwarf
+distance is qualitatively similar, and both are qualitatively different from the lower resolution. However,
+quantitatively the two higher resolution runs are not as similar to each other as the analogous runs in the
+inertial frame. Convergence with resolution is slightly slower in the rotating reference frame
+because in the rotating reference frame a stable, unchanging circular orbit requires balance between
+two forces with opposite sign (the gravitational and centrifugal forces), and slight perturbations from the
+circular orbit are amplified by the effect of the Corolis force. In the inertial frame, these numerical instabilities
+vanish, but the cost is that there is no centrifugal force to actively maintain the white dwarf distance,
+which is why it is much more likely for the orbit to prematurely decay. In either case, these results suggest
+at least a minimum resolution of 200 km for getting the dynamics qualitatively right. To put that into context,
+consider that the parameter study of \citet{dan:2014} used 40,000 SPH particles per simulation, or (for an equal mass
+binary) 20,000 particles per white dwarf. For, say, a $0.9\ \msolar + 0.9\ \msolar$ white dwarf binary on
+a $256^3$ zone simulation grid, there are 20,000 zones that fit within a white dwarf. We do not
+intend here to directly compare results between the two simulation methods. We limit ourselves to the
+observation that at least for grid-based codes, a parameter study such as the ones performed by
+\citet{dan:2012} and \citet{dan:2014} would likely not yield qualitatively convergent results if it were to use the
+same effective mass resolution. Instead the number of zones inside each star should at least be doubled.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.2in,clip]{plots/spatial_convergence_rot0}
+  \caption[Distance between two unequal mass white dwarfs, inertial frame]
+          {Distance between the two white dwarfs in the unequal mass system, for the first orbit.
+           The distance is scaled by the initial orbital distance. 
+           We plot at three different resolutions, corresponding to the number of 
+           effective zones per dimension in the refined regions.
+           \label{fig:unequal_spatial_convergence_inertial}}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.2in,clip]{plots/spatial_convergence_rot1}
+  \caption[Distance between two unequal mass white dwarfs, rotating frame]
+          {Distance between the two white dwarfs in the unequal mass system, for the first orbit.
+           The distance is scaled by the initial orbital distance. 
+           We plot at three different resolutions, corresponding to the number of 
+           effective zones per dimension in the refined regions.
+           \label{fig:unequal_spatial_convergence_rotating}}
+\end{figure}
 
 
 
@@ -1805,7 +2523,7 @@ to calculate the potential at that point in principle to arbitrary accuracy by i
 We prefer to work with solely real-valued quantities, and so we make use of the addition theorem for spherical harmonics \citep[Section 3.6]{jackson}:
 \begin{align}
   \frac{4\pi}{2l+1} \sum_{m=-l}^{l} Y^*_{lm}(\theta^\prime,\phi^\prime)\, Y_{lm}(\theta, \phi) &= P_l(\text{cos}\, \theta) P_l(\text{cos}\, \theta^\prime) \notag \\
-   &+ 2 \sum_{m=1}^{l} \frac{(l-m)!}{(l+m)!} P_{l}^{m}(\text{cos}\, \theta)\, P_{l}^{m}(\text{cos}\, \theta^\prime)\, \left[\text{cos}(m\phi)\, \text{cos}(m\phi^\prime) + \text{sin}(m\phi)\, \text{sin}(m\phi^\prime)\right].
+   &\hspace{-2.0in}+ 2 \sum_{m=1}^{l} \frac{(l-m)!}{(l+m)!} P_{l}^{m}(\text{cos}\, \theta)\, P_{l}^{m}(\text{cos}\, \theta^\prime)\, \left[\text{cos}(m\phi)\, \text{cos}(m\phi^\prime) + \text{sin}(m\phi)\, \text{sin}(m\phi^\prime)\right].
  \end{align}
 The $P_l(x)$ are the Legendre polynomials and the $P_l^m(x)$ are the associated Legendre polynomials. We construct them using a stable recurrence relation given known values for $l = 0$ and $l = 1$. We can then formulate the expansion in a different way:
 \begin{align}
