@@ -268,6 +268,39 @@ submitted to the Astrophysical Journal entitled ``White Dwarf Mergers on Adaptiv
 Meshes. III. Inspiral and Coalescence'' (Max P. Katz, Michael Zingale, Alan C. Calder,
 F. Douglas Swesty, Ann S. Almgren, Weiqun Zhang).}
 
+This research was supported by NSF award AST-1211563. An
+award of computer time was provided by the Innovative and Novel
+Computational Impact on Theory and Experiment (INCITE) program.  This
+research used resources of the Oak Ridge Leadership Computing Facility
+located in the Oak Ridge National Laboratory, which is supported by
+the Office of Science of the Department of Energy under Contract
+DE-AC05-00OR22725. Projects AST006 and AST106 supported use of the ORNL/Titan resource. 
+This research is part of the Blue Waters sustained-petascale computing project, 
+which is supported by the National Science Foundation (awards OCI-0725070 
+and ACI-1238993) and the state of Illinois. Blue Waters is a joint 
+effort of the University of Illinois at Urbana-Champaign and its 
+National Center for Supercomputing Applications.
+This research used resources of the National Energy Research Scientific Computing
+Center, which is supported by the Office of Science of the
+U.S. Department of Energy under Contract No. DE-AC02-05CH11231.
+Results in this dissertation were obtained using the high-performance
+LIred computing system at the Institute for Advanced Computational
+Science at Stony Brook University, which was obtained through
+the Empire State Development grant NYS \#28451. 
+This work used the Extreme Science and Engineering Discovery Environment (XSEDE), 
+which is supported by National Science Foundation grant number ACI-1053575. 
+Project AST100037 supported use of the resources NICS/Kraken and NICS/Darter.
+
+Special thanks are given 
+to the organizers of the 2015 Caltech Gravitational Wave 
+Astrophysics School, and their supporters: the NSF 
+under CAREER award PHY-1151197, the Sherman Fairchild 
+Foundation, the LIGO Laboratory at Caltech, and Caltech.
+
+This research has made use of NASA's Astrophysics Data System 
+Bibliographic Services. In addition, this research has made use
+of the AstroBetter blog and wiki.
+
 
 
 \newpage
@@ -495,16 +528,11 @@ resulted in a thermonuclear detonation. Reproducibility of the detonation
 through numerical simulation is critical for building 
 confidence in this progenitor model.
 
-This paper is the first in a series designed to address these
-outstanding theoretical issues for white dwarf mergers. This work 
-discusses the verification of our hydrodynamics code for simulating
-these events. Later efforts will look at the initial conditions of the
-system, the robustness with which a hotspot is found from which a
-detonation could occur, and the importance of the initial white dwarf
-models, which should be more sophisticated than simple carbon-oxygen
-mixtures and in principle should use results from modern stellar
-evolution calculations. \autoref{sec:methodology}
-describes our code and why it can provide useful results compared to
+This dissertation is the culmination on an effort designed to address these
+outstanding theoretical issues for white dwarf mergers and collisions. This work 
+discusses the verification of our hydrodynamics software for simulating
+these events. \autoref{sec:methodology} describes the algorithms used by our
+hydrodynamics software and why this software can provide useful results compared to
 other methodologies used for this problem. 
 \autoref{sec:software} describes the method we use for setting up a
 binary white dwarf simulation. \autoref{sec:verification} discusses a few
@@ -514,8 +542,8 @@ demonstrates that the software scales well for supercomputer
 applications. In \autoref{sec:collisions} we discuss our results for
 collisions of white dwarfs, and in \autoref{sec:mergers} we discuss
 our results for mergers of white dwarsf. Finally, \autoref{sec:conclusion}
-recaps what we have shown and highlights some of the future work we
-plan to do.
+recaps what we have shown and highlights some of the future work that
+could be done.
 
 
 
@@ -638,10 +666,36 @@ ensures that any boundary effects do not pollute the inner region
 where the stars will eventually make contact.  We further make the
 restriction that refined grids cannot reach the domain boundary.
 
+\castro\ uses the dual energy formalism of \cite{bryan:1995,ENZO}, where we evolve equations
+for both the total energy $E$ and the internal energy $e$, using one or the other to
+determine the pressure in the hydrodynamics step (if we are using the total energy, we
+compute the corresponding internal energy by subtracting the kinetic energy $K$). The switching
+parameter is $\eta_1 = 10^{-3}$, and if $(E - K) / E < \eta_1$, we use the internal energy variable $e$
+in the equation of state call that obtains the pressure. Otherwise we use $(E - K)$. The
+idea behind this is that in high Mach number flows where the kinetic energy dominates the
+total energy, we do not want to risk generating a negative estimate of the internal energy
+due to roundoff error. Similarly, at regular intervals when we enforce consistency of the
+internal energy variable (which occurs a few times per timestep), we sync the internal energy
+variable so that it is equal to $E - K$, skipping this step only if $(E - K) / E < \eta_2$.
+We adopt by default $\eta_2 = 10^{-4}$. This choice can matter much more for reacting
+hydrodynamics than non-reacting hydrodynamics. For example, a collision can only lead to a
+detonation if there is sufficient conversion of kinetic to thermal energy. Obviously
+this happens physically, but if the parameter $\eta_2$ is set high enough then it could
+in principle interfere by not allowing the simulation to efficiently convert kinetic energy
+to thermal energy. (This does not end up mattering much for our simulations because the
+kinetic energy does not strongly dominate the internal energy for colliding WDs.) And on
+a similar note, when using this formalism it is ambiguous which variable to use ($(E - K)$
+or $e$) when calculating the initial temperature that goes into the reaction step. We
+have introduced a new parameter $\eta_3$ that uses the same logic as the first two: if
+$(E - K) / E < \eta_3$, we use $(E - K)$ in the equation of state call that obtains the
+temperature; otherwise, we use $e$. However, unlike the other two, the \castro\ default
+is $\eta_3 = 1.0$, meaning that we normally use the internal energy variable.
+
 %TODO: describe hybrid momentum
 %TODO: discuss source term predictor?
 %TODO: discuss retries?
-%TODO: discuss dual energy
+
+
 
 \subsection{Equation of State}
 \label{sec:eos}
@@ -691,7 +745,7 @@ We solve the Poisson equation for self-gravity for our problem,
 where $\Phi$ is the gravitational potential, $G$ is the gravitational
 constant, and $\rho$ is the mass density.\footnote{In the \castro\ code, the 
 right-hand side is negated and therefore $\Phi$ is positive. We use the 
-sign convention that is typical for astrophysics in this paper. 
+sign convention that is typical for astrophysics in this dissertation. 
 When $\Phi$ appears in the code it is negated to compensate for this.} 
 The solution of this equation in \castro\ is described in \cite{castro}, and
 consists of both level and composite solves, and (optionally) a final
@@ -1265,7 +1319,7 @@ ${}^{12}$C, ${}^{16}$O, ${}^{20}$Ne, and ${}^{24}$ Mg. Therefore the core of
 any network appropriate for modeling nuclear burning in white dwarfs will be
 these alpha chain nuclides, with the idea being that links up the $\alpha$-chain
 will eventually get us to ${}^{56}$Ni, the nuclide responsible for the
-energy output of Type Ia supernovae. In this paper we consider four networks
+energy output of Type Ia supernovae. In this dissertation we consider four networks
 to do this, presented in order of increasing complexity. The most simple is
 \isoseven\ \citep{timmes:2000}, which includes all of the aforementioned isotopes and
 ${}^{28}$Si (see also \citet{hix:1998}). ${}^{28}$Si effectively measures the
@@ -1336,7 +1390,7 @@ consistent with its new internal energy.) Here $c_V$ is the specific heat at
 constant volume, which is provided by the equation of state.  During this burn,
 we can keep $c_V$ constant using its initial value, or at each step we
 can choose to re-evaluate the equation of state using the latest value of $(\rho, T)$.
-The latter is more expensive but also more accurate, and we use it in this paper.
+The latter is more expensive but also more accurate, and we use it in this dissertation.
 In practice we find that the cost is negligible in comparison to the more expensive
 parts of the calculation, and it can significantly speed up convergence near NSE.
 A third option presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
@@ -1462,7 +1516,7 @@ total amount of iron-group elements generated over the course of
 the simulation. We have found that the addition of the 
 limiter based on changes in species functionally precludes this.
 
-With the timestep limited the way we advocate in this paper, 
+With the timestep limited the way we advocate in this dissertation, 
 the timesteps are generally short enough so that the errors 
 due to splitting are small. Other approaches to the coupling 
 between reactions and hydrodynamics have been proposed in the 
@@ -1515,7 +1569,7 @@ kinetic energy from the white dwarf bulk motion to thermal energy
 as the white dwarfs slam into each other. Keeping $\eta_2$ large
 prevents this from happening, and consequently the temperature
 will never reach values high enough to generate significant
-amounts of nickel. For this paper we choose $\eta_2 = 10^{-4}$,
+amounts of nickel. For this dissertation we choose $\eta_2 = 10^{-4}$,
 which is low enough for the correct conversion of kinetic energy
 but not so low that we need to be concerned about roundoff issues
 caused by subtracting kinetic from total energy. This is also
@@ -1594,7 +1648,7 @@ region should thus be at least as large as the number of
 timesteps before a regridding procedure is performed.
 We choose a value of two for both the number of zones in the 
 buffer region and the number of steps in between regrids,
-for all simulations in this paper.
+for all simulations in this dissertation.
 
 We agree with \citet{kushnir:2013} that solving this numerical
 instability is crucial to avoiding unphysical detonations.
@@ -1628,17 +1682,397 @@ we have recently added to \castro, so we may try this in future work.
 \section{Simulation Software}
 \label{sec:software}
 
+In this chapter we describe the white dwarf merger software, and focus in 
+particular on the initial white dwarf models (\autoref{sec:initial_models}), 
+the initial problem setup (\autoref{sec:initial_state}), and analysis 
+(\autoref{sec:analysis}) components.
+
+The software used to set up the problems in this dissertation
+\wdmerger\footnote{\wdmerger\ can be obtained at \url{https://github.com/BoxLib-Codes/wdmerger}.},
+is freely available at an online repository hosting service.
+\wdmerger\ is effectively a problem setup for \castro\ similar to the types of
+problems that come packaged with the software, and also contains tools for setting up
+simulations and analyzing the results.
+Version control in both the parent software (\boxlib, \castro, \microphysics) and in \wdmerger\
+permits us to reference the state of the code at the time a simulation
+was performed. In all plot files and diagnostic output generated by \castro, 
+and figure files generated by \wdmerger,
+we store the active \texttt{git} commit hashes of \boxlib, \castro, \microphysics, and \wdmerger.
+Line plots are generated using the \matplotlib\ library for \python\ 
+\citep{matplotlib}, while slice plots and other multi-dimensional visualizations are 
+generated using the \yt\ code \citep{yt}.
+
+
+
 \subsection{White Dwarf Models}
 \label{sec:initial_models}
+
+At the start of any full simulation, we generate initial model white
+dwarfs by integrating the equation of hydrostatic equilibrium, taking
+the temperature to be constant, and using the
+stellar equation of state.  This results in a single non-linear
+equation to find the density in a zone given the conditions in the
+zone beneath it:
+\begin{equation}
+\frac{p_{i+1} - p_i}{\Delta x} = \frac{1}{2} (\rho_i + \rho_{i+1}) g_{i+1/2}.
+\end{equation}
+This equation is a function of $\rho_{i+1}$ only since the pressure is
+uniquely determined by the density in this case. Here, $\rho_i$ and $p_i$
+are known, and $g_{i+1/2}$ is the gravitational acceleration at the
+interface between zones $i$ and $i+1$, found by simply adding up all
+the mass from zones $1$ to $i$ to get the enclosed mass,
+$M_{i+1/2}$, and then setting $g_{i+1/2} =
+-GM_{i+1/2}/r_{i+1/2}^2$. We solve this equation for $\rho_{i+1}$
+using a Newton-Raphson iteration.
+
+We desire to specify the mass of the white dwarf, as well as its
+temperature and composition. To start the integration off, we
+therefore need to guess at a central density.  We then do a secant
+iteration over the entire integration procedure to find the central
+density needed to yield the desired total mass.  The grid spacing is
+$\Delta x = 6.25\ \text{km}$. We chose this value because no simulation
+we perform is likely to exceed this grid resolution inside the stars 
+themselves; for our normal domain size (see below), this corresponds to 
+three jumps in refinement by a factor of four. We find that for low 
+resolution runs, this is a better choice than selecting the 1D grid 
+spacing to be comparable to the 3D grid spacing.
+
+The white dwarf composition is determined by the chosen mass. For 
+this dissertation we adopt the scheme of \cite{dan:2012}. Low-mass WDs 
+are pure helium; low-to-intermediate-mass WDs are an even carbon-oxygen 
+core with a relatively large helium envelope; intermediate-mass 
+WDs are a carbon-oxygen core with slightly more oxygen than carbon; 
+and, high-mass WDs are composed of oxygen, neon, and magnesium. 
+This choice of composition distribution broadly resembles the 
+results of stellar evolution calculations in the respective 
+mass ranges, though it does not match the calculations in detail.
+
+We map the 1D model onto the 3D Cartesian grid by taking density,
+temperature, and composition as the independent variables,
+interpolating these to the cell centers, and then calling the equation
+of state to initialize the remaining terms. It is possible to interpolate
+instead by using pressure instead of temperature, as pressure is more 
+closely related to hydrostatic balance, but the EOS we use is so 
+insensitive to temperature that this mapping can result in large 
+deviations from the isothermal assumption we started with.  The 
+interpolation process divides each zone into $n_{\text{sub}}$ 
+sub-zones of equal volume for
+the purpose of sampling the 1D model, and the sub-zones are added
+together to obtain the full zone's state. This
+sub-grid-scale interpolation is useful especially near the edge of the star,
+where the density falls off rapidly with radius. Typically we take 
+$n_{\text{sub}} = 4$.
+
+
 
 \subsection{Initial State}
 \label{sec:initial_state}
 
+The \wdmerger\ software comes with a robust set of options for setting up
+various types of binary white dwarf systems (and it can also do a single
+star simulation by placing the star at the center of the computational domain,
+which we take to be the origin.) For mergers and other problems that start
+the WDs in a circular orbit, the setup is described in \autoref{sec:initial_state:mergers},
+while for collisions the setup is described in \autoref{sec:initial_state:collisions}.
+
+
+
+\subsubsection{Mergers}
+\label{sec:initial_state:mergers}
+
+For a binary star merger simulation that starts in a circular orbit,
+we take as parameters the mass of the two
+white dwarfs and the initial orbital period $T$. Using Kepler's third
+law and assuming a circular orbit, we can then work out the orbital
+separation $a$:
+\begin{equation}
+  a = \left(\frac{GM T^2}{4\pi^2}\right)^{1/3}.
+\end{equation}
+Here $M = M_P + M_S$ is the total mass of the system, where $M_P$ is
+the specified \textit{primary} mass and $M_S$ is the specified
+\textit{secondary} mass. The primary WD always starts on the left
+side of the computational domain for our simulations, and is more
+massive than the secondary. This reflects the usual terminology in the
+literature where the primary WD is the accretor and the secondary is
+the donor. The center of mass is located at the center of the
+computational domain, and by default the stars lie along the $x$ axis, so that
+the primary's center of mass is located at $x = -(M_S / M)\, a$ and
+the secondary's center of mass is located at $x = (M_P / M)\, a$.
+The user may choose to initialize the stars along a different axis,
+and can also choose a non-zero orbital phase and/or eccentricity.
+
+The initial velocity is taken to be zero in if we are in the reference
+frame that rotates with the WDs, and if we are in the inertial frame
+the velocity in every zone is set equal to the rigid rotation rate 
+corresponding to the distance of that zone from the rotation axis, given
+the specified period $T$. Thus the inertial frame and rotating frame 
+simulations are starting off with the same initial conditions: two white 
+dwarfs locked in synchronous rotation. This is the simplest assumption to 
+make, but in the future we may explore relaxing this requirement.
+
+In this dissertation we do not attempt to enforce equilibrium with an additional relaxation
+step. This will be an important part of future work that follows up on
+what we have done here, as
+numerous groups working on binary evolution
+\citep{swc:2000,motl:2002,rosswog:2004,dan:2011,pakmor:2012:gadget}
+have commented on the importance of equilibrium initial conditions in
+determining the evolution of the system. As a consequence of starting 
+in a non-equilibrium setting, there are 
+large density and pressure gradients near the white dwarf surfaces
+that result in significant amounts of mass flowing out of the white dwarfs.
+This can result in spurious non-physical consequences such as 
+the total density or energy going negative in a zone. To compensate 
+for this, we start the simulation with a timestep that is a few orders 
+of magnitude smaller than that required by the CFL criterion, and allow
+the timestep to increase by 1\% each timestep so that the timestep reaches 
+its maximum allowed by the velocities on the grid over a span of approximately 
+1000 timesteps. This allows the gas at the surface of the white dwarf
+to come closer to equilibrium without having 
+discontinuous jumps in the density or energy. For all simulations, 
+the maximum timestep is set to be equal to one-half of the CFL limit.
+
+The computational domain has a total size of $1.024 \times
+10^{10}\ \text{cm}$ in each spatial dimension, and is centered at the
+origin. Our coarse grid has $256^3$ zones, corresponding to a spatial
+resolution of 400 km. For the present study, we choose a simple
+refinement strategy: on the coarse grid, all zones within twice the Roche radius of each
+star are tagged for refinement, using the formula provided by 
+\citet{eggleton:1983} for the effective Roche radius $r_L$ of a star in a binary,
+\begin{equation}
+  \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.
+\end{equation}
+In this formula we can use $q = M_S / M_P$ for obtaining the Roche radius of the secondary,
+and use the inverse value of $q$ to obtain the Roche radius of the primary.
+The extra buffer from doubling the Roche radius ensures that the sharp density gradients near
+the edge of the star are within the zone of refinement. On higher levels, 
+we tag all zones above a given density threshold (taken to be $1\ \text{g cm}^{-3}$ 
+in this dissertation) that corresponds to the stars themselves. We also ensure
+that the outer part of the domain is never tagged for refinement. In
+future work we will add criteria that tag for refinement the gas
+between the stars, which is expected to feature nuclear burning.
+
+Outside of the stars we fill the rest of the domain with a very low density 
+ambient gas because our hydrodynamics model requires the density to be 
+non-zero everywhere. This ambient material can create difficulties for the simulation.
+In addition to the negative densities or energies at the stellar surfaces mentioned earlier, 
+in the rotating reference frame we observe that standing instabilities can create very 
+large velocities in the ambient fluid that drag down the global timestep by 
+up to an order of magnitude.  To deal with this we employ a ``sponge'' similar 
+to that described by \citet{maestro3} for the outer regions of the computational domain. 
+After the hydrodynamics update, we apply a damping force to the momentum
+equation as follows:
+\begin{equation}
+  (\rho \mathbf{u})^{n+1} \to \frac{(\rho \mathbf{u})^{n+1}}{1 + (\Delta t / \Delta t_S) f_S},
+\end{equation} 
+where $\Delta t_S$ is a timescale for the sponge to operate on, and
+$f_S$ is the damping factor.  We choose it so that that the sponge is
+non-operational inside a radius $r_S$ from the origin, and fully
+applied at a radius $r_S^\prime \equiv r_S + \Delta r_S$. We then
+smooth the sponge out between $r_S$ and $r_S^\prime$:
+\begin{equation}
+  f_{S} = \begin{dcases} 0 & r < r_S \\ \frac{1}{2}\left(1 - \text{cos}\left[\pi\left(\dfrac{r - r_S}{\Delta r_S}\right)\right]\right) & r_S \leq r < r_S^\prime \\ 1 & r \geq r_S^\prime. \end{dcases}\label{eq:sponge_frac}
+\end{equation}
+For the simulations in this dissertation that use the sponge, we set $r_S$ to be 75\% of the 
+distance from the origin to the domain boundaries, and $\Delta r_S$ so
+that the sponge smoothing region extends another 10\% of that distance.
+The resulting profile is displayed in \autoref{fig:sponge}. We set $\Delta
+t_S = 0.01$ s, which is of the same order as the CFL timestep
+for typical problem setups. While the sponge is applied we should avoid imputing any physical 
+meaning to what is happening in the low-density gas far from the stars.
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.4]{plots/sponge}
+  \caption{Radial profile of the hydrodynamical sponge we apply (\autoref{eq:sponge_frac}). 
+           We subtract $f_S$ from unity; the value of $1 - f_S$ indicates what happens 
+           to the sponged function after the sponge is applied. The sponge has no effect 
+           in the inner part of the domain, and is fully applied at the outer edge.\label{fig:sponge}}
+\end{figure}
+
+
+
+\subsubsection{Collisions}
+\label{sec:initial_state:collisions}
+
+We implement the white dwarf collision problem in \castro\ by setting the white dwarf
+centers of mass to be initially separated by a distance of four times
+the (secondary) white dwarf radius. (Note that the radius of the white dwarf, and
+consequently the initial distance, depends on the equation of state used, and this
+can vary somewhat depending on the relevant physics used, such as Coulomb corrections
+in the Helmholtz equation of state. However, the results do not really depend on the
+exact initial distance as long as there is enough time for the WDs to distort in
+response to tidal forces as they approach.) Their initial velocity is that of
+two point-masses in free-fall towards each other coming in from infinity, such that
+the contact point is at the origin, and they approach each other on the $x$-axis.
+By default the WDs approach each other head-on, with their respective centers
+lying on the $x$-axis, but we have also added an option
+to have the WDs approach each other at a non-zero impact parameter $b$, where the
+offset is perpendicular to the $x$-axis in the $y$ direction. We measure
+$b$ in units of the secondary WD's radius, so that the default head-on case
+corresponds to $b = 0$ and the case where the two WDs just graze past each other
+corresponds to $b = 1$ (in practice it happens slightly differently because
+of the WDs responding to each other's gravitational fields).
+
+For all the 3D simulations to follow, we use the same coarse grid as in \autoref{sec:initial_state:mergers}.
+When we use adaptive-mesh refinement, we will usually
+use the refinement scheme described in \autoref{sec:unstable_burning}. This is
+acceptable because the outcome of the collision problem is chiefly a function
+of the propagation of burning front through the WDs, so for this problem one
+can take some liberties in other parts of the algorithm for the purpose of
+computational efficiency, which can always be turned back on later if a more
+accurate answer is desired. So, for example, we do not need to add refinement
+everywhere in the WDs in the interest of getting the collision dynamics to be
+slightly more accurate. Additionally, we choose to solve the Poisson equation
+for the self-gravity of the system only on the coarse grid. The gravitational
+potential and acceleration on the finer levels are interpolated from the coarse
+grid. This grants enhanced computational speed without a serious effect on the
+accuracy of the simulation (for the case where the fine grids cover the stars,
+we have checked that the more accurate gravitational forcing would only modify
+slightly the time to impact and the subsequent detonation process).
+
+We have also enabled in \wdmerger\ the ability to use the 2D cylindrical ($R-z$)
+coordinate system evolution in \castro. In this coordinate system, we align
+the WDs along the $z$-axis (which is analogous to our $x$-axis in the Cartesian
+evolution) at the usual distance, with the center of the WDs at $R = 0$. The
+un-simulated $\phi$ dimension then would extend the WDs through a $2\pi$ revolution.
+The nature of the axisymmetry inherent to the cylindrical coordinate system
+means that we can only run head-on collisions with $b = 0$. The coarse grid
+is the same resolution as the 3D case: the width of the $z$ axis is $1.024 \times 10^{10}$
+cm and the width of the $R$ axis is $5.012 \times 10^{9}$ cm, with twice as
+many zones along the $z$ axis as the $R$ axis so that the equal 400 km
+resolution is maintained.
+
+For the collision problem only, we implement a specific stopping criterion:
+the simulation is terminated when the total energy is positive, indicating that
+the system has become unbound due to nuclear energy release, and has been
+constant or decreasing for the last five timesteps, indicating that no further
+meaningful nuclear energy generation is occurring and material is now beginning
+to stream off the simulation domain. As all simulations in this paper are of
+WD collisions that generate enough energy to unbind the system, this stopping
+criterion is applied throughout all simulations shown here.
+
+As for the mergers, the region outside the WDs is filled with a low-density ambient
+material with $\rho = 10^{-4}\ \text{g / cm}^{-3}$ whose composition is the
+same as that of the WDs (which is equal carbon and oxygen by mass, unless
+stated otherwise). Reactions in this region are unimportant, so for
+computational efficiency, we disable all nuclear burning for zones that have
+$\rho < 10^6\ \text{g / cm}^{-3}$ and $T < 10^8\ \text{K}$. The initial ambient
+temperature is $10^7\ \text{K}$, which is the same as the initial temperature
+everywhere throughout the WDs, and we set the temperature floor to the same
+value.
+
+
+
 \subsection{Analysis}
 \label{sec:analysis}
 
+We track a number of diagnostic quantities at the end of coarse grid timesteps. 
+For all simulations, we record the total energy (including the breakdown into
+its components: kinetic, internal, gravitational potential, and rotation; we note
+that for the diagnostics we actually use $(\rho E)$ for calculation of the total energy,
+rather than explicitly calculating the sum of kinetic and internal, as this is
+the quantity that should be explicitly conserved), 
+the total angular momentum, and the center of mass of the system. 
+We also separately record diagnostic 
+information about the stars. Our strategy for tracking their 
+locations is as follows: at the beginning of the calculation, we store the 
+physical center of mass $\mathbf{x}_{c}$ of the stars as determined 
+by Kepler's third law. We also store the velocity $\mathbf{v}_{c}$ 
+of the stars. Then, at each new time step we make a preliminary guess for their 
+location by updating the location using the old velocity, 
+$\mathbf{x}_{c} \rightarrow \mathbf{x}_{c} + \mathbf{v}_{c} \Delta t$.
+We then refine our guess for the location and velocity of each star by computing a
+location-weighted sum of the mass and velocity over the computational domain. 
+To do this, we need a cutoff for determining what counts as part of the primary 
+and what counts as part of the secondary. We use a simple criterion: the star
+that a zone ``belongs'' to is the one that exerts a larger magnitude
+gravitational force on that zone (as computed using the tentative data
+for that star's mass and radius). From this we obtain the corrected mass
+of each star as well as its location and velocity. Once we have the new centers of mass,
+we compute the effective radius of each star at various density cutoffs. This involves 
+computing the volume $V$ of all zones that belong to the star (in the sense described above) 
+whose density is greater than the cutoff. We then compute $r_{\text{eff}} = (3V/4\pi)^{1/3}.$
+
+When we do simulations with adaptive-mesh refinement, there are multiple levels of refinement 
+that contribute to a global integral. To deal with this we employ a ``mask'' which zeros out 
+the data in a zone on a given level if there is a refined region overlying that zone.
+
+
+
 \subsubsection{Gravitational Waves}
-\label{sec:grvatational_waves}
+\label{sec:gravitational_waves}
+
+A final diagnostic quantity we consider is the gravitational wave emission by the 
+binary system. White dwarfs are not strongly affected by general relativistic effects;
+the orbital motions are much slower than the speed of light, and the relativity parameter 
+$GM / c^2 R$, which measures the ratio of the Schwarzschild radius of a mass $M$ to the actual 
+radius $R$ of the object, is much less than unity for a white dwarf. Thus at any given time the 
+relativistic effects are negligible compared to the Newtonian gravity and so we do not 
+directly include relativistic effects in computing the dynamical evolution of the system.
+A white dwarf binary system does emit gravitational waves during its evolution; this energy loss 
+is what drives the initial inspiral over very long timescales for isolated binary systems, and
+contributes to the orbital decay for hierarchical triple systems. Eventually it will drive the system 
+to become dynamically unstable due to the Newtonian tidal forces alone, though once that period begins, 
+the gravitational energy loss is inconsequential in affecting the dynamical evolution of the system. 
+The frequency of the gravitational waves emitted by the white dwarf binary 
+is similar to the frequency of the orbital motion, which is in the range 
+10-100 mHz for our problem. This is well outside the range of currently existing 
+gravitational wave detectors but is very well suited for proposed space-based detectors such as eLISA \citep{eLISA}.
+
+We follow the prescription of \citet{blanchet:1990} for computing a gravitational wave 
+signal for our simulation. At distances far from the 
+gravitational wave source, we can consider the leading term in the gravitational 
+wave signal:
+\begin{equation}
+  h^{TT}_{ij}(t,\mathbf{x}) = \frac{2G}{c^4 r}P_{ijkl}(\mathbf{n}) \ddot{Q}_{kl}(t - r/c).
+\end{equation}
+$h$ is the perturbation to the spacetime metric and is commonly called the \textit{strain}; 
+for laser interferometers, it measures the relative change in the distance between mirrors. 
+The ``TT'' superscript indicates that we work in the commonly used tranverse-traceless gauge.
+This strain is measured at time $t$ and position $\mathbf{x}$ relative to the binary system.
+$r\equiv |\mathbf{x}|$ is the distance from the observer to the binary system. The unit vector 
+$\mathbf{n} \equiv \mathbf{x} / r$ then measures the direction of the outgoing wave with 
+respect to the observer, and $P_{ijkl}(\mathbf{n})$ is an operator that projects a tensor 
+onto the direction orthogonal to $\mathbf{n}$:
+\begin{align}
+  P_{ijkl}(\mathbf{n}) &= \left(\delta_{ik} - n_i n_k\right)\left(\delta_{jl} - n_j n_l\right) \notag \\
+                      &- \frac{1}{2}\left(\delta_{ij} - n_i n_j\right)\left( \delta_{kl} - n_k n_l\right).
+\end{align}
+$Q_{kl}$ is the quadrupole moment tensor:
+\begin{equation}
+  Q_{kl} = \int dV \rho \left(x_k x_l - \frac{1}{3}\delta_{kl} \mathbf{x}^2\right).
+\end{equation}
+The argument $(t - r/c)$ indicates that to get the strain at time $t$ we evaluate the second derivative of the 
+quadrupole moment at the retarded time $t - r/c$. In practice the retarded time is simply the simulation time
+and the observer would see the gravitational waves after a time delay of order $r/c$.
+
+Therefore the primary component of the calculation is the evaluation of the second time derivative of $Q_{kl}$.
+Explicitly constructing a discretized form of this derivative, using the current state and the state at 
+previous times, is undesirable because of the inherent imprecision (its accuracy depends on the size of the timestep),
+in addition to the logistical challenges that may be implied by saving and using previous simulation states. 
+\citet{blanchet:1990} provide a prescription for this time derivative purely in terms of the state at a given time:
+\begin{equation}
+  \ddot{Q}_{kl} = \text{STF}\left\{2\int dV \rho (v_k v_l + x_k g_l)\right\}.
+\end{equation}
+The symmetric trace-free (STF) operator is defined as:
+\begin{equation}
+  \text{STF}\left\{A_{ij}\right\} = \frac{1}{2}A_{ij} + \frac{1}{2}A_{ji} - \frac{1}{3} \delta_{ij} \sum_{k}A_{kk}.
+\end{equation}
+
+The strategy is then as follows. At the end of the coarse timestep, we first calculate $\ddot{Q}_{kl}$
+using an integral over the domain. This quantity is independent of the observer. If we 
+are using a rotating reference frame, we first convert velocities and positions back to the inertial 
+frame before evaluating the integral. Then, 
+we pick an observing location $\mathbf{x}$ relative to the domain, evaluate the projection operator, 
+and then perform the relevant tensor contraction to determine the strain tensor. We can 
+repeat this process for any number of observing locations at minimal cost, since the quadruple tensor 
+only needs to be calculated once. Gravitational waves only excite modes orthogonal to their 
+direction of travel. These are the ``plus'' and ``cross'' modes, $h_+$ and $h_\times$, named after 
+the types of spatial distortions they exhibit. We calculate the signal at a distance $r$ along 
+the $x$, $y$ and $z$ axes. For the latter, as an example, $h_{+} = h_{11} = -h_{22} \propto (\ddot{Q}_{11} - \ddot{Q}_{22})/2$ and 
+$h_{\times} = h_{12} = h_{21} \propto \ddot{Q}_{12}$. All other entries vanish. By default we take $r = 10$ kpc; 
+as shown by \citet{loren-aguilar:2005}, this is a typical distance scale over which an 
+experiment such as LISA could detect a coalescing binary white dwarf system. 
+The strain at any other distance is easily calculated and goes as the inverse of the distance.
 
 
 
@@ -2624,7 +3058,7 @@ and a non-uniform interior structure.
 While a typical merger event has a characteristic profile including a chirp and ringdown,
 white dwarf collisions are noticeably distinct in their gravitational wave signatures, and
 hence may be interesting targets for observation for future low frequency gravitational
-wave detectors such as LISA \citep{eLISA}. The strain increases monotonically for a collision until impact,
+wave detectors. The strain increases monotonically for a collision until impact,
 instead of oscillating back and forth at a characteristic frequency as for mergers.
 The main caveat for these events compared to events
 such as neutron star mergers is that due to the event being inherently less energetic,
@@ -2645,10 +3079,9 @@ detectors.
 \autoref{fig:gw_signal_2D} is a plot of the gravitational wave strain for
 the representative case of \autoref{sec:collision_parameters} ($M_P = 0.64\ \msolar$, $M_S = 0.64\ \msolar$, $b = 0$),
 where we disabled the normal stopping criterion and let the simulation run until $t = 20$.
-We use the convention that the absolute scale of the strain is normalized to a distance
-of 10 kpc (the strain scales inversely with the source distance). We show the $+$ and $\times$
-polarizations for observers situated along the $x$, $y$, and $z$ axes (for the 2D case,
-this corresponds to the $z$, $R$, and $\phi$ axes, respectively, in the simulation).
+We show the $+$ and $\times$ polarizations for observers situated along the $x$, $y$,
+and $z$ axes (for the 2D case, this corresponds to the $z$, $R$, and $\phi$ axes, respectively,
+in the simulation) at the conventional distance of 10 kpc.
 The shape of the profile agrees qualitatively with the gravitational wave signatures
 predicted by \cite{loren-aguilar:2009:collisions} and \cite{garcia-senz:2013}.
 \autoref{fig:gw_signal_3D} shows the strain prediction for a 3D collision event
@@ -2793,7 +3226,7 @@ The multipole moments now take the form:
   Q_{lm}^{(L,S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, \Theta(r - r^\prime)\, {r^\prime}^l \rho(\mathbf{x}^\prime)\, d^3 x^\prime \\
   Q_{lm}^{(U,S)} &= 2\frac{(l-m)!}{(l+m)!} \int P_{l}^{m}(\text{cos}\, \theta^\prime)\, \text{sin}(m\phi^\prime)\, \Theta(r^\prime - r)\, {r^\prime}^{-l-1} \rho(\mathbf{x}^\prime)\, d^3 x^\prime.  
 \end{align}
-In practice, of course, we select some maximum value $l_{\text{max}}$ at which we terminate the summation, determined either by computational efficiency requirements or by the fact that there is little information at high orders for sufficiently smooth mass distributions. In \castro\ we have the capability to compute any of the above multipole moments, though in this paper we are only using the multipole expansion to calculate the boundary conditions on the potential, and so we neglect calculation of the moments with a $U$ subscript as we are assuming that all of the mass is interior to the boundary. \autoref{eq:multipole_potential} is directly recovered under these conditions.
+In practice, of course, we select some maximum value $l_{\text{max}}$ at which we terminate the summation, determined either by computational efficiency requirements or by the fact that there is little information at high orders for sufficiently smooth mass distributions. In \castro\ we have the capability to compute any of the above multipole moments, though in this dissertation we are only using the multipole expansion to calculate the boundary conditions on the potential, and so we neglect calculation of the moments with a $U$ subscript as we are assuming that all of the mass is interior to the boundary. \autoref{eq:multipole_potential} is directly recovered under these conditions.
 
 \clearpage
 
