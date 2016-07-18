@@ -1,0 +1,17 @@
+# latex intermediates
+*.aux
+*.log
+*.out
+*.dvi
+*.toc
+*.bbl
+*.blg
+*.lof
+*.lot
+*.ps
+*.pdf
+plots/*.pdf
+
+# emacs temporaries
+*~
+\#*

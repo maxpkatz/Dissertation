@@ -641,6 +641,7 @@ restriction that refined grids cannot reach the domain boundary.
 %TODO: describe hybrid momentum
 %TODO: discuss source term predictor?
 %TODO: discuss retries?
+%TODO: discuss dual energy
 
 \subsection{Equation of State}
 \label{sec:eos}
@@ -1568,15 +1569,15 @@ burning, as $c_s$ and $e$ are both increasing in this case.
 As the point of the limiter is to ensure that the changes to the
 \textit{original} energy are small enough so that the following
 hydrodynamics update can advect away newly generated energy
-quickly enough to avoid a nuerically seeded detonation,
+quickly enough to avoid a numerically seeded detonation,
 we desire the most conservative version of the limiter. We discuss
 our results with the suppressed burning mode in \autoref{sec:collision_parameters:burningmode}.
 Note that we have found that with this option enabled, it typically takes
 many more timesteps to complete a burn than in self-heating mode.
 
 Regardless of whether the suppressed burning mode works for this
-particular problem, it is not physical, so in general we have
-taken a different approach. If we insist that we cannot
+particular problem, it is not physical, so we include for
+consideration a different approach. If we insist that we cannot
 cannot directly control the energy injection timescale, we 
 must find a way to alter the sound-crossing timescale. 
 We can achieve this by adding levels of refinement in 
@@ -1595,23 +1596,31 @@ We choose a value of two for both the number of zones in the
 buffer region and the number of steps in between regrids,
 for all simulations in this paper.
 
-While this approach may add several AMR levels 
-to a simulation, we agree with \citet{kushnir:2013} that 
-solving this numerical instability is crucial to avoiding
-early, unphysical detonations, and so it is unavoidable
+We agree with \citet{kushnir:2013} that solving this numerical
+instability is crucial to avoiding unphysical detonations.
+A simulation that does not solve this problem will not obtain
+the correct amount and will not converge properly with resolution.
+This may justify the addition of many AMR levels to the domain
 if a correct evaluation of the burning phase is desired.
-A simulation that does not solve this problem in this way
-(or some analogous manner) will not obtain the correct amount 
-of burning, and will not converge properly with resolution. 
-Fortunately, the regions where this criterion is not satisfied 
-are fairly localized on the grid, so the amount of additional 
-computational work is not insurmountable for a single simulation.
-However, this level of accuracy may make a parameter study of
-the problem challenging given current computational resources.
-When resources are limited, one can still use this method and set a
-limit on the number of levels of refinement possible in the simulation,
-so that the refinement will still go in the right places but may not
-refine all of the way to the regime of guaranteed stability. 
+Even if one cannot afford the full resolution required by this
+AMR criterion, and chooses to limit the number of levels to some
+predetermined maximum based on a constraint of computing time,
+the added resolution will still go to the most-needed places.
+However, a significant drawback to this approach is that it
+does not turn on until after an unstable burning region has
+been generated, so this AMR criterion cannot help in the case
+where a spurious detonation begins in a single timestep on the coarse
+grid, though it will kick in immediately after that timestep
+to resolve the regions where the detonation has occurred.
+A possible remedy to be explored in future work is to add
+refinement pre-emptively in regions where the ratio $t_s / t_e$
+approaches $f_{s}$ but does not yet exceed it. Another
+possibility for this case would be to track how many levels
+would have been needed to prevent the numerical detonation,
+based on the stability criterion, and reject the timestep and
+retry it from the starting state using that many levels of refinement.
+The ability to reject a timestep and retry it is functionality that
+we have recently added to \castro, so we may try this in future work.
 
 
 
@@ -2385,35 +2394,278 @@ same effective mass resolution. Instead the number of zones inside each star sho
 \section{White Dwarf Collisions}
 \label{sec:collisions}
 
-
-
 \subsection{Parameter Study}
-\label{sec:collisions_parameters}
+\label{sec:collision_parameters}
+
+Before turning to the effect that adaptive mesh refinement has on WD collisions,
+we will first examine the effect of a number of other code parameters. For most
+of the following we will use two-dimensional axisymmetric simulations which have
+impact parameter $b = 0$, unless otherwise specified, and we will stick to a
+moderate resolution (we use only the coarse grid described in \autoref{sec:software}).
+For all simulations in this section, we use a pair of $0.64\ \msolar$ WDs, a binary
+system that has been studied in most of the collision papers to date. This allows
+us to cheaply test how the collision responds to many effects. One limitation of
+this is that we will not find out exactly how a simulation differs in the case of a
+high-resolution 3D run when these parameters changed. Another is that we will not
+perform a full parameter study where we consider the full non-linear dependence of
+all parameters on all other parameters; here we are merely interested in qualitative
+trends that will help to understand the limitations of WD collision simulations.
+
+With those caveats in mind, let us consider the tests and the results we obtained.
+Our primary metric for the following tests will be the amount of $^{56}$Ni generated
+in the collision, as this is the parameter most directly related to the observable
+quantities of interest for Type Ia supernovae. Specifically, we collect information
+at the end of every timestep about the total amount of nickel on the grid (in solar
+masses), and we will use the maximum value of this nickel mass. When the stopping
+criterion described in \autoref{sec:software} is used, this nickel mass is generally
+constant or decreasing by the end of the run. The typical amount of nickel mass generated
+for our runs at low resolution is $0.2\ \msolar$, which is significantly lower than
+that obtained by \cite{raskin:2010} and \cite{kushnir:2013} for the same problem.
+We will discuss this in \autoref{sec:collision_resolution}.
 
 \subsubsection{Timestepping}
 \label{sec:collision_parameters:timestepping}
 
+For the standard self-heating burns that we use, the most important parameters we
+examined come from the timestep limiting scheme described in \autoref{sec:burnerhydrocoupling}.
+The parameters $f_{be}$ (from \autoref{eq:timestep_e}) and $f_{bX}$ (from
+\autoref{eq:timestep_X}) control the size of the timestep as a function of the
+burning rate. As the timestep gets smaller, the error due to the Strang splitting
+scheme coupling the reactions and the burning also gets smaller, and we expect
+that the results become more accurate.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/dtnuc_max_Ni56_m_P_0.64_m_S_0.64}}}
+  \caption[Nickel production dependence on the burning timestep factor]
+          {Nickel production as a function of the timestep factors $f_{be}$
+           (solid blue, limiting the timestep on changes in internal energy) and
+           $f_{bX}$ (dashed green, limiting the timestep on changes in species).
+           For a given $f_{be}$, $f_{bX}$ with the same value typically limits
+           the timestep by at least an order of magnitude more.
+           \label{fig:timestep_factor}}
+\end{figure}
+\autoref{fig:timestep_factor} demonstrates the effect of both parameters on the nickel
+production. As either $f$ becomes small, the restriction on the timestep becomes quite
+severe: for $f_{bX} = 0.01$, the minimum timestep in the simulation is smaller than
+$2 \times 10^{-9}\ \text{s}$ and the full simulation requires over 750,000 timesteps.
+Yet it is clear that even for this steep value of the limiter, which is much stricter
+than the limiter used in, e.g., \cite{hawley:2012} and \cite{raskin:2010}, the
+simulation has not fully converged in nickel production. These limiters are somewhat
+redundant in the sense that a given $f_{bX}$ corresponds to another (higher) $f_{be}$,
+as is evident by the fact that on the graph the curves look similar in shape but with
+a horizontal offset.
+
+We also examined the effect of the method used to enforce the limiting, using the
+four limiting modes discussed in \autoref{sec:burnerhydrocoupling}. The results are shown
+in \autoref{table:burninglimitermode} for the case $f_{be} = 0.3$ (we did not use
+limiting with $f_{bX}$ for this test). The two modes that use the full last timestep's
+worth of information to estimate $\dot{e}$ yield a slightly larger nickel mass than the
+two modes that only use more recent information, but the difference is negligible.
+
+\input{plots/burning_limiter_mode_m_P_0.64_m_S_0.64.tbl.nodeluxe}
+
+For all remaining tests in this section, unless otherwise stated, we take $f_{be} = 10^2$
+and disable limiting with $f_{bX}$ by setting it to a large number. This choice is a balance
+between accuracy and efficiency: we avoid the obviously wrong answers that occur for $f_{be} > 10^3$
+while ensuring that the timesteps are long enough that the following tests are computationally
+inexpensive.
+
 \subsubsection{Nuclear Network}
 \label{sec:collision_parameters:network}
+
+Now we move to a discussion of the effect of including various isotopes
+in the nuclear reaction network. In particular we compare the \isoseven, \aproxthirteen,
+\aproxnineteen, and \aproxtwentyone\ reaction networks. In all cases we run
+the same problem setup, and the unused isotopes (everything but carbon and oxygen)
+have their mass fractions in every zone set to a negligibly small number at initialization.
+\autoref{table:networks} lists the $^{56}$Ni generation and total energy generation (determined
+by subtracting the initial energy from the final energy). The energy generated in the latter
+three cases agrees remarkably well, with a less than $0.5\%$ difference. \aproxthirteen\
+over-generates nickel at the $2\%$ level compared to the networks with more isotopes, a reasonably
+small difference. On the other hand, agreement with \isoseven\ is not very strong, as \isoseven\
+generates far too much nickel and far too little energy. Nevertheless while the quantitative
+agreement is not there, the collision looks qualitatively similar compared to the evolution with
+more complicated networks, so while \isoseven\ should not be used for predicting nucleosynthetic
+yields in production science runs, it may still be fair for use in proof-of-concept studies.
+
+\input{plots/networks_m_P_0.64_m_S_0.64.tbl.nodeluxe}
+
+\isoseven\ also has the peculiar property that after the detonation had passed through the WDs,
+the region at the central contact point did not fully stop burning, yielding a quasistatic energy
+release that added a couple of million extra timesteps to the simulation (in addition to the few
+hundred it normally takes) before we manually terminated the run. The full effect of these additional
+timesteps only amounted to a $10^{-4}$ relative change in the nickel production. By examining the behavior
+of zones near the collision point, we discovered the reason for this. The zones in question have a composition that
+is approximately $98\%$ Ni and $2\%$ He by mass. For this combination, a direct evaluation of the RHS in
+comparison to, say, \aproxthirteen, reveals that $dX/dt$ for these isotopes is off by many orders of magnitude.
+This is a consequence of the choice inherent to the network to assume that the isotopes in between $^{28}$Si
+and $^{56}$Ni are in an effective equilibrium state. So an advective update that yields even a small change
+to the abundances in the zone will very strongly knock the zone out of equilibrium with respect to the burn
+step following the advective update. This then causes the burning timestep limiter to kick in and make the
+timestep very small so that the advective changes do not cause such strong effects on the burning equilibrium.
+This effect is an argument against the use of \isoseven\ for explosive, non-hydrostatic burning problems.
 
 \subsubsection{Burning Mode}
 \label{sec:collision_parameters:burningmode}
 
+In \autoref{sec:burning} we observed that there are several alternatives to the traditional
+self-heating approach in a burn. These alternatives are relevant to a collision problem because,
+as pointed out by \cite{raskin:2010} and \cite{kushnir:2013}, it is possible for a typical
+zone in our simulation to release a very large amount of energy in a burn before it is cooled
+off by a subsequent hydrodynamic expansion step, leading to the numerically unstable burning
+problem described in \autoref{sec:unstable_burning}. \autoref{table:burningmode} lists nickel
+production for the four burning modes described earlier. The hydrostatic burn does produces
+slightly more nickel than the self-heating burn, consistent with the idea that by limiting the
+energy release from early carbon burning, we can forestall a detonation which is numerically
+spurious. Yet the difference is only about 5\%. The reason is that the hydrostatic burn controls
+the energy release during the burn, but \textit{not} what happens in the rest of the hydrodynamics
+step. And in the hydrodynamics step, the \castro\ algorithm performs multiple EOS calls to ensure
+that the temperature is synchronized with the internal energy at various points in the update.
+So in practice there is a temperature change due to the burn for our problem. This seems inevitable
+for any hydro code unless the hydrodynamics update includes an explicit equation for $T$ that is
+independent of what is happening for the internal energy. Similarly, the hybrid burn does not
+affect the total nickel production relative to the hydrostatic burn. The hybrid burn only changes
+the behavior for zones that have a net negative energy release from the hydrostatic burn, which
+occurs only after we have burned to NSE.
+
+\input{plots/burning_mode_m_P_0.64_m_S_0.64.tbl.nodeluxe}
+
+In contrast, the suppressed burning mode (modeled after \citet{kushnir:2013}) produces only about
+$5 \times 10^{-4}\ \msolar$ of $^{56}$Ni. In a suppressed burn, we ensure that at every evaluation
+of the right-hand-side vector for the nuclear network integration, all quantities are scaled by the
+same factor, with this factor ensuring that the energy release is not large enough to permit a
+spurious detonation. This seems to be equivalent to the method used in \citet{kushnir:2013}. We
+reproduce their claim that this suppresses the detonation until later in the collision, after more
+material has approached the stalled shock. We also observe that, for a given resolution, the simultaneous
+detonations occur slightly outside the initial contact point, near the edges of the stalled shock. They
+establish as the main source of error in simulations that produce too little nickel. However, we find
+that the resulting detonations are not strong enough to convert a significant amount of material to NSE
+conditions; instead, only QSE conditions are reached near the center of the collision, leaving a significant
+amount of silicon and sulfur on the domain that is not further processed.
+
 \subsubsection{Impact Parameter}
 \label{sec:collision_parameters:impactparameter}
+
+As the impact parameter varies for a head-on collision, the cross-section of the contact
+zone between the two stars varies in size and geometry. In \autoref{fig:impact_parameter}, we
+see the dependence of the nickel production on the impact parameter $b$, measured in units
+of the WD radius. This test was performed using the 3D setup at our usual base resolution of
+400 km. For computational efficiency, timestep limiting based on burning was disabled.
+We sampled at $b = 0.0$, $0.01$, $0.02$, $0.03$, $0.04$, $0.05$, and then increasing
+in increments of $0.05$. Relative to $b = 0$, there is a slight increase in nickel production for small
+but non-zero $b$, which then declines with increasing $b$ except for a bump at $b = 0.5$.
+For $b \ge 0.7$, no detonation forms at all, and the merged object remains a stable C/O WD
+with $M = 1.2\ \msolar$ at least until $t = 100$.
+
+It is worth nothing that for $b = 0.0$ the nickel production is a bit smaller for the 3D simulation
+than its equivalent 2D simulation, the default case described above. There are differences both in
+the size of the timestep (which as we saw in \autoref{sec:collision_parameters:timestepping} plays a role in
+the total nickel production) and in the discretized nature of the stars; the assumption of perfect
+azimuthal symmetry inherent to the 2D simulation breaks down for the 3D simulation, especially at
+low resolution, since the zones are rectangular.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.8]{plots/impact_parameter}
+  \caption[Nickel production dependence on the impact parameter]
+          {$^{56}$Ni generation as a function of the initial WD impact parameter for
+           a $0.64\ \msolar$ + $0.64\ \msolar$ WD collision.
+           \label{fig:impact_parameter}}
+\end{figure}
+
+
 
 \subsubsection{Other Parameters}
 \label{sec:collision_parameters:other}
 
+We tested a few other parameters that ended up having no serious effect on the outcome.
+The dual energy parameter $\eta_2$ described in \autoref{sec:hydrodynamics} can have a
+minor effect on the nickel production, yielding variations on the order of a few percent,
+but there is no clear pattern. The dual energy parameter $\eta_3$ has no effect on the
+outcome: the answer is the same for $\eta_3 = 0$ and $\eta_3 = 1$, which makes sense
+because all of the reacting regions have a low enough kinetic energy relative to their
+total energy such that the internal energy variable is always kept in sync with $(E - K)$.
+(We did not look at $\eta_1$ because that has a direct effect only on the hydrodynamics,
+not the reactions.) We also tested whether our choice for the temperature floor mattered
+by lowering it to $10^6\ \text{K}$ and $10^5\ \text{K}$, and this had no effect on nickel
+production. It does allow parts of the WDs to become colder as they move, due to numerical
+errors in the advecting flow (the Helmholtz equation of state is very insensitive to
+temperature, so even small changes in the internal energy can create very large changes
+in the implied temperature), but the amount of energy injected by the collision is so
+large that the final result is insensitive to whatever the initial temperature of the
+WDs were. We also checked whether there was any consequence of our choice to disable the
+burning for small enough $\rho$ and $T$. Lowering the minimum $\rho$ for reactions to
+$10^0\ \text{g cm}^{-3}$ from $10^6\ \text{g cm}^{-3}$ had a negligible effect,
+and varying the minimum $T$ for reactions from $2 \times 10^{7}\ \text{K}$ to
+$4 \times 10^{8}\ \text{K}$ also had no meaningful effect.
+
+The choice of the WD composition to be equal carbon and oxygen by mass is a common
+choice in the literature and is broadly comparable to what stellar evolution codes
+yield for WDs of this mass. Still, it is an arbitrary approximation, especially the
+insistence that the composition is uniform throughout the WD. In \autoref{table:co}
+we list the nickel production as a function of the initial carbon mass fraction.
+This can have a few percent impact on the outcome for the plausible values we tested.
+In future work we may look at the effect of a more realistic progenitor structure,
+including the effects of a helium shell on the surface of the WDs \citep{holcomb:2015}
+and a non-uniform interior structure.
+
+\input{plots/co_frac_m_P_0.64_m_S_0.64.tbl.nodeluxe}
+
 
 
 \subsection{Resolution Dependence}
-\label{sec:collisions_resolution}
+\label{sec:collision_resolution}
 
 
 
 \subsection{Gravitational Wave Signature}
-\label{sec:collisions_gravitational_waves}
+\label{sec:collision_gravitational_waves}
+
+While a typical merger event has a characteristic profile including a chirp and ringdown,
+white dwarf collisions are noticeably distinct in their gravitational wave signatures, and
+hence may be interesting targets for observation for future low frequency gravitational
+wave detectors such as LISA \citep{eLISA}. The strain increases monotonically for a collision until impact,
+instead of oscillating back and forth at a characteristic frequency as for mergers.
+The main caveat for these events compared to events
+such as neutron star mergers is that due to the event being inherently less energetic,
+the typical distance scale on which we could observe a white dwarf merger or collision
+is the size of our own galaxy, with extragalactic events being unlikely to be
+detected, at least with the first generation of space-based gravitational wave
+detectors.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.8]{plots/gw_signal_2D}
+  \caption[Gravitational wave strain, head-on collision]
+          {Gravitational wave strains for the head-on collision of two $0.64\ \msolar$
+           white dwarfs. The strain is normalized to a source distance of 10 kpc.
+           \label{fig:gw_signal_2D}}
+\end{figure}
+
+\autoref{fig:gw_signal_2D} is a plot of the gravitational wave strain for
+the representative case of \autoref{sec:collision_parameters} ($M_P = 0.64\ \msolar$, $M_S = 0.64\ \msolar$, $b = 0$),
+where we disabled the normal stopping criterion and let the simulation run until $t = 20$.
+We use the convention that the absolute scale of the strain is normalized to a distance
+of 10 kpc (the strain scales inversely with the source distance). We show the $+$ and $\times$
+polarizations for observers situated along the $x$, $y$, and $z$ axes (for the 2D case,
+this corresponds to the $z$, $R$, and $\phi$ axes, respectively, in the simulation).
+The shape of the profile agrees qualitatively with the gravitational wave signatures
+predicted by \cite{loren-aguilar:2009:collisions} and \cite{garcia-senz:2013}.
+\autoref{fig:gw_signal_3D} shows the strain prediction for a 3D collision event
+with $M_P = 0.8\ \msolar$, $M_S = 0.6\ \msolar$, and $b = 0.8$. This mass combination
+was chosen because \cite{loren-aguilar:2009:collisions} used the same combination for
+gravitational wave signal prediction, but we cannot replicate the large impact parameter
+they used on our simulation grid, so the detonation looks quite different than in their case.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.8]{plots/gw_signal_3D}
+  \caption[Gravitational wave strain, off-center collision]
+          {Gravitational wave strains for the off-center collision ($b = 0.8$) of
+           $0.8\ \msolar$ and $0.6\ \msolar$ WDs. The strain is normalized to a
+           source distance of 10 kpc.
+           \label{fig:gw_signal_3D}}
+\end{figure}
 
 
 
@@ -2424,7 +2676,7 @@ same effective mass resolution. Instead the number of zones inside each star sho
 
 
 \newpage
-\section{Discussion and Conclusions}
+\section{Conclusions}
 \label{sec:conclusion}
 
 
