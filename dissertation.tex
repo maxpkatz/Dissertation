@@ -867,7 +867,12 @@ The equation of state (EOS) for our simulations is the Helmholtz EOS
 arbitrary relativity and degeneracy over a wide range of temperatures
 and densities. Thermodynamic quantities are calculated as derivatives
 of the Helmholtz free energy, and the values are interpolated from a
-table. The natural variables of the Helmholtz free energy are
+table. Approximate contributions from the radiation pressure
+of a blackbody and Coulomb corrections from the ions are added (note that
+many authors disable these Coulomb corrections in their local versions
+of the software, and it is not always reported in the literature when
+the Coulomb corrections are or are not used).
+The natural variables of the Helmholtz free energy are
 temperature and density, and calling the EOS is simplest in this
 form. In hydrodynamics we often have the density and
 internal energy as independent variables, and we want to obtain the
@@ -1943,10 +1948,10 @@ while for collisions the setup is described in \autoref{sec:initial_state:collis
 \label{sec:initial_state:mergers}
 
 For a binary star merger simulation that starts in a circular orbit,
-we take as parameters the mass of the two
-white dwarfs and the initial orbital period $T$. Using Kepler's third
-law and assuming a circular orbit, we can then work out the orbital
-separation $a$:
+we take as parameters the mass of the two white dwarfs and some measure
+of the initial distance. The simplest is the initial orbital period $T$.
+Using Kepler's third law and assuming a circular orbit, we can then work
+out the orbital separation $a$:
 \begin{equation}
   a = \left(\frac{GM T^2}{4\pi^2}\right)^{1/3}.
 \end{equation}
@@ -1963,6 +1968,29 @@ the secondary's center of mass is located at $x = (M_P / M)\, a$.
 The user may choose to initialize the stars along a different axis,
 and can also choose a non-zero orbital phase and/or eccentricity.
 
+For simulations intended to cause a merger, we want a measure that takes
+into account the likelihood that mass transfer will begin. The traditional
+choice is the Roche radius of the star, which measures the effective gravitational
+sphere of influence for each star. The effective Roche radius $r_L$ is defined as
+the radius of a sphere that would have the same volume as the ``Roche lobe,`` the
+region of space in which material principally belongs to one of the stars. (The surface
+of the region is the isosurface where the effective potential becomes zero, meaning
+that material becomes unbound due to the centrifugal force). It is
+an approximation because this region is teardrop-shaped in reality. A common
+expression, which we adopt, for $r_L$ is
+the formula provided by \citet{eggleton:1983}:
+\begin{equation}
+  \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.
+\end{equation}
+$q \equiv M_S / M_P$ is defined as the mass ratio of the binary system. Since
+we specify the mass ratio, we can use this formula to obtain a binary setup where $a$,
+the initial separation, is such that the location of the inner edge of the secondary
+is coincident with the extent of its Roche radius.
+In other words, the secondary is on the brink of mass transfer. We can also multiply this
+by a factor $f_R$ to increase or decrease the distance relative to the Roche radius; for
+$f_R > 1$ the system gets more stable against mass transfer, and $f_R < 1$ the system becomes
+more unstable to mass transfer.
+
 The initial velocity is taken to be zero in if we are in the reference
 frame that rotates with the WDs, and if we are in the inertial frame
 the velocity in every zone is set equal to the rigid rotation rate 
@@ -1974,8 +2002,7 @@ make, but in the future we may explore relaxing this requirement.
 
 In this dissertation we do not attempt to enforce equilibrium with an additional relaxation
 step. This will be an important part of future work that follows up on
-what we have done here, as
-numerous groups working on binary evolution
+what we have done here, as numerous groups working on binary evolution
 \citep{swc:2000,motl:2002,rosswog:2004,dan:2011,pakmor:2012:gadget}
 have commented on the importance of equilibrium initial conditions in
 determining the evolution of the system. As a consequence of starting 
@@ -1998,20 +2025,13 @@ The computational domain has a total size of $1.024 \times
 origin. Our coarse grid has $256^3$ zones, corresponding to a spatial
 resolution of 400 km. For the present study, we choose a simple
 refinement strategy: on the coarse grid, all zones within twice the Roche radius of each
-star are tagged for refinement, using the formula provided by 
-\citet{eggleton:1983} for the effective Roche radius $r_L$ of a star in a binary,
-\begin{equation}
-  \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.
-\end{equation}
-In this formula we can use $q = M_S / M_P$ for obtaining the Roche radius of the secondary,
-and use the inverse value of $q$ to obtain the Roche radius of the primary.
+star are tagged for refinement.
 The extra buffer from doubling the Roche radius ensures that the sharp density gradients near
 the edge of the star are within the zone of refinement. On higher levels, 
 we tag all zones above a given density threshold (taken to be $1\ \text{g cm}^{-3}$ 
 in this dissertation) that corresponds to the stars themselves. We also ensure
 that the outer part of the domain is never tagged for refinement. In
-future work we will add criteria that tag for refinement the gas
-between the stars, which is expected to feature nuclear burning.
+the present work we do not tag for refinment based on nuclear burning for mergers.
 
 Outside of the stars we fill the rest of the domain with a very low density 
 ambient gas because our hydrodynamics model requires the density to be 
@@ -2742,7 +2762,9 @@ There are a number of effects worth looking into here. For simplicity, we choose
 cases to demonstrate the simulation behavior: an equal mass case of two $0.9\ \msolar$ 
 white dwarfs, and an unequal mass case of $0.9\ \msolar$ and $0.75\ \msolar$ white dwarfs.
 In both systems, the secondary should be stable against mass loss.
-In each case, the initial orbital period is 100 seconds.
+In each case, the initial orbital period is 100 seconds. For all simulations in this section,
+we use the standard Euler equations that conserve linear momentum, and defer to \autoref{sec:mergers}
+a description of the hybrid advection technique.
 
 For some of the algorithms described earlier in this work, a single orbit of these 
 systems is enough to examine their effects. In \autoref{sec:gravity_boundary_conditions},
@@ -2810,7 +2832,7 @@ cell-centered ${\tt rs} = 2$ algorithm, but it is a small effect.
 
 We are most interested in the stability of these systems over long
 timescales. To this end, we consider the same systems as above, but
-evolve them for 25 orbital periods. In
+evolve them for 25 orbital periods. In 
 \autoref{fig:circular_orbit_comparison} we illustrate the evolution of
 these systems by plotting the center of mass locations of the white
 dwarfs on the orbital ($xy$) plane. For the equal mass case in the
@@ -2820,12 +2842,12 @@ orbiting at the initial distance, at least for a while. Towards the end
 of the run, however, the orbit starts to decay significantly, and the center-of-mass
 distance of the two stars has decreased by about 10\% after 25 orbits.
 We attribute this to non-conservation of angular momentum, which occurs 
-because our code only explicitly conserves linear momentum. This orbital 
-decay resembles the effect seen by \citet{swc:2000} for the case of neutron stars. 
-In the unequal mass case, the magnitude of the orbital decay is smaller but 
-at the end of the run the secular decline in distance is also visible. In 
-both cases the stars would likely merge due to numerical error 
-after a long enough timescale.
+because here we ran our code in the mode that  only explicitly conserves
+linear momentum. This orbital decay resembles the effect seen by \citet{swc:2000}
+for the case of neutron stars. In the unequal mass case, the magnitude of
+the orbital decay is smaller but at the end of the run the secular decline
+in distance is also visible. In both cases the stars would likely merge due
+to numerical error after a long enough timescale.
 
 The co-rotating frame is different.  For clarity of visualization, we
 rotate these results back into the inertial frame before displaying
@@ -3406,6 +3428,198 @@ they used on our simulation grid, so the detonation looks quite different than i
 \newpage
 \section{White Dwarf Mergers}
 \label{sec:mergers}
+
+In this section we turn to results from merger calculations. We focus specifically on
+results from two cases: one where the secondary is just filling its Roche radius ($f_R = 1.0$);
+see \autoref{sec:initial_state:mergers} for a description of the initialization procedure),
+and one where the secondary is already significantly overflowing its Roche radius ($f_R = 0.9$).
+In the former case mass transfer begins slowly and steadily, while in the latter the binary
+orbit quickly decays and the system coalesces.
+
+\subsection{Steady Mass Transfer}
+\label{sec:mergers:stable}
+
+For the case with $f_R = 1.0$, mass transfer begins immediately but at a slow and steady pace.
+This would occur even if angular momentum was perfectly conserved, because the stars will deform
+in response to the discrete nature of the grid and the tidal gravitational field of the other
+star, and because the Roche lobe is not spherical, so some material will be jutting out of the
+Roche lobe and become unbound from the secondary and fall onto the primary. For the case $f_R = 1.0$
+we consider only the early mass transfer phase of the system so that we can understand the
+convergence properties of the system and some basic properties of the mass transfer.
+
+To determine the resolution needed to get the dynamics right, we repeated a test similar to that
+of \autoref{sec:kepler}, running the same problem on our usual coarse grid ($n = 256$ zones
+per spatial dimension) and on grids that have jumps by a factor of two or four ($n = 512$ or
+$n = 1024$ effective zones per spatial dimension, respectively). In this section we choose
+$M_P = 0.90\ \msolar$ and $M_S = 0.60\ \msolar$, which for $f_R = 1.0$ corresponds to an effective
+Keplerian orbital period $T = 61$ seconds.
+
+We ran the test in the four combinations corresponding to the inertial versus rotating frames
+and the hybrid versus standard equations. We show most of the first orbit's worth of evolution
+in \autoref{fig:merger_convergence_rot0_hybrid0} for evolution in the inertial frame using the
+standard Euler equations, and in \autoref{fig:merger_convergence_rot1_hybrid1} for evolution
+in the co-rotating frame using the angular momentum-conserving hybrid advection equations of
+\autoref{sec:hybrid_advection}. The metric we use is the distance between the centers of mass
+for the two stars.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/merger_convergence_m_P_0.90_m_S_0.60_roche_1.00_rot_0_hybrid_0}}}
+  \caption[$f_R = 1.0$ convergence, inertial frame, standard equations]
+          {Convergence properties of the $f_R = 1.0$ merger for the first 50 seconds (corresponding
+           to approximately one full orbit) in the inertial frame with the standard equation set.
+           The vertical axis is the distance of the stars normalized to their initial distance.
+           The curves are labeled by the effective number of zones per dimension $n$.
+           \label{fig:merger_convergence_rot0_hybrid0}
+           }
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/merger_convergence_m_P_0.90_m_S_0.60_roche_1.00_rot_1_hybrid_1}}}
+  \caption[$f_R = 1.0$ convergence, rotating frame, hybrid equations]
+          {Convergence properties of the $f_R = 1.0$ merger for the first 50 seconds (corresponding
+           to approximately 80\% of one full orbit) in the rotating frame with the hybrid equation set.
+           The vertical axis is the distance of the stars normalized to their initial distance.
+           The curves are labeled by the effective number of zones per dimension $n$.
+           \label{fig:merger_convergence_rot1_hybrid1}
+          }
+\end{figure}
+
+The results confirm what we saw in \autoref{sec:kepler}: the grid that refines within the stars with
+only a jump by a factor of two, with effective spatial resolution of 200 km, is sufficient to obtain
+qualitative convergence and obtain fairly accurate quantitative results. We use results from that case
+in the remaining plots in this section. The dynamical evolution between the two frames is qualitatively
+pretty similar, which confirms the trustworthiness of the hybrid momentum formalism. The differences
+between the two methods become more apparent upon looking at the angular momentum conservation in
+\autoref{fig:merger_angular_momentum_comparison}. In the inertial frame, the system slowly leaks angular
+momentum over time for either evolution method. Angular momentum changes are inevitable because of losses
+or gains through the domain boundary (both hydrodynamic and due to the source terms) and because the
+gravitational and rotational forces may not numerically be conservative in their effect on the angular
+momentum (for example, this can happen due to gravity because of the non-zero error tolerance in the
+solve for the potential). However, we have added to \castro\ the ability to directly track the amount
+of mass, momentum, energy, and angular momentum lost off the domain boundary due to hydrodynamic fluxes,
+and for the hybrid momentum evolution, the angular momentum changes are almost entirely dominated by
+losses through the boundary, with less than 1\% of the angular momentum change due to effects other than
+boundary losses. This implies that angular momentum within the stellar material itself is excellent.
+That there is a steady loss of angular momentum on the full domain over this time period is an indication
+of the fact that in the inertial frame, the stellar motion is constantly exciting ambient material through
+hydrodynamic pressure waves as it plows through the ambient gas, driving periodic motions that prevent
+the ambient material from reaching an equilibrium state (at least at this early time). As one would expect
+for this mechanism, the amount of angular momentum lost through the grid boundary is nearly identical for
+both the standard and hybrid evolutions. The difference is that the inertial frame has an additional source
+of angular momentum loss which is over twice as large as the amount lost to the grid boundary. Consequently
+the angular momentum conservation for the hybrid equations is actually far better than the plot first appears;
+the total size of the change in the angular momentum is three orders of magnitude smaller for the hybrid equations
+when this effect is accounted for. To illustrate this, in \autoref{fig:merger_angular_momentum_comparison_minus_grid_losses}
+we show the same plot but with the domain boundary losses of angular momentum subtracted. This result confirms
+that the hybrid advection technique does a much better job at its intended goal of angular momentum conservation.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/merger_angular_momentum_comparison_m_P_0.90_m_S_0.60_n_512}}}
+  \caption[Angular momentum conservation properties for $f_R = 1.0$]
+          {Angular momentum conservation error for the $f_R = 1.0$ merger for the first 100 seconds.
+           The vertical axis is the absolute value of the change in the angular momentum relative to
+           its initial value.
+           \label{fig:merger_angular_momentum_comparison}
+          }
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/merger_angular_momentum_comparison_minus_grid_losses_m_P_0.90_m_S_0.60_n_512}}}
+  \caption[Angular momentum conservation properties for $f_R = 1.0$, grid losses subtracted]
+          {Same as \autoref{fig:merger_angular_momentum_comparison}, but losses through the
+           domain boundary have been subtracted.
+           \label{fig:merger_angular_momentum_comparison_minus_grid_losses}
+          }
+\end{figure}
+
+The results of the rotating frame tell a slightly different story. In \autoref{fig:merger_angular_momentum_comparison},
+we see that the angular momentum evolution is nearly identical in the rotating frame for both the standard
+and the hybrid evolution. This is a consequence of the rotation source term having a property that the gravitational
+source term does not. Momentum conservation for the latter is violated only to the extent that the cell-centered
+gravitational acceleration does not exactly satisfy the Poisson equation (see \autoref{eq:momentum_discretization}
+and the surrounding text), which is caused by small errors in the Poisson solve. The rotation source term for
+the momentum is coordinate-dependent; specifically, because the coordinates used in determining the Coriolis
+force are cell-centered, there will not be (implied) exact cancellation at zone edges as there is for gravity.
+This could potentially be mollified by changing the way the rotation source term for momentum is applied, but
+that is outside the scope of this work. However, the angular momentum eventually stabilizes (as we confirmed
+by running the simulation a little longer), because the non-conservation effect here depends on the Coriolis
+force, which is proportional to velocity, and which therefore becomes less important as the system reaches
+a quasi-stable equilibrium. This is another application of the observation of \autoref{sec:kepler} that while
+the rotating frame does a reasonable job of keeping the system stable against collapse, the Coriolis force
+can wreak havoc if the system is far from equilibrium in the frame. We note in passing that \citet{byerly:2014}
+have advocated a compromise approach where the variables are advected in a rotating frame but measured with
+respect to the inertial frame. This has the nice effect of causing the Coriolis term to drop out of the
+angular momentum equation in the hybrid equation set, so it is a promising avenue for future work.
+
+The final quantity we look at is the mass of the stars over this time period, shown in \ref{fig:steady_mass_transfer}.
+The mass of the secondary declines at a steady secular rate of approximately $2 \times 10^{-5}\ \msolar \text{s}^{-1}.$
+This mass loss is modulated by a periodic oscillation of the stars around their quasi-static orbital distance,
+a consequence of not starting the stars exactly in equilibrium; remember that we define the stellar masses
+as an integral over the domain that looks at where material on the domain is with respect to the stellar
+center of mass, so wobbling of the center of mass over time can cause a corresponding wobble in what we
+call the stellar mass without having any meaningful physical implication; it is an accounting issue only.
+This mass loss rate is such that if it were maintained linearly, the secondary would disrupt completely in
+approximately 100 orbits. Of course, this estimate is an upper bound, as white dwarfs expand when
+they lose mass, making escape of material through the Roche lobe surface easier, amplifying the mass loss
+in a non-linear feedback loop (see the discussion in \citet[Section 2]{dan:2011} for an overview of the
+physics related to mass transfer stability). Nevertheless, this estimate is far longer than the $\sim 1$
+orbital period that this system lasts in \citet{dan:2011}, and more in keeping with the $\sim 30$ orbital
+periods of mass transfer they obtained when starting from equilibrium initial conditions. Why is there
+such a stark difference? It is true that an AMR code is better equipped to resolve small levels of mass transfer
+than a SPH code that uses equal-mass particles because the density in a zone can take effectively
+any value, while for the SPH code mass transfer occurs in more discrete chunks corresponding to the motion of
+particles on the domain. Nevertheless, even a small number of SPH particles would be sufficient to
+resolve the mass transfer rate we observe in our simulation. The dominant effect actually comes from
+the fact that our initial WD distance is about 15\% larger. The cause of this is found in
+a relatively obscure place: the use of Coulomb corrections in the equation of state. We enable the Coulomb
+corrections in the Helmholtz equation of state, and for a given stellar mass the Coulomb corrections cause
+the star to be more compact (the central density becomes about 10\% higher), with a smaller radius. But since,
+like \citeauthor{dan:2011}, we selected the initial WD distance to be based on the WD radius, and the Roche lobe
+size does not depend on the WD radius, the effect of enabling the Coulomb corrections is to make the distance
+implied by the Roche lobe-based algorithm to be larger. While \citeauthor{dan:2011} do not explicitly state whether
+they use the Coulomb corrections, we obtain nearly exact agreement with the initial WD distance they report
+if we disable the Coulomb corrections. (Note that there can be small differences in the reported radius
+even for identical equations of state since the initial radius depends on what cutoff density is used in
+computing the initial one-dimensional stellar model.) Consequently, less of our star is outside the
+Roche lobe than theirs is, so our mass transfer is much steadier.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.8]{{{plots/merger_masses_m_P_0.90_m_S_0.60_roche_1.00_rot_0_hybrid_1_n_512}}}
+  \caption[Stellar masses, steady mass transfer case]
+          {Mass of the primary ($M_P = 0.9\ \msolar$) and secondary ($M_S = 0.6\ \msolar$)
+           stars for $f_R$, normalized to their initial masses.
+           The evolution is done in the inertial frame with the hybrid equation set.
+           \label{fig:steady_mass_transfer}
+          }
+\end{figure}
+
+We agree with \citeauthor{dan:2011} that equilibrium initial conditions can play an important role in
+determining the subsequent mass transfer, and that the cause of this is largely due to tidal
+deformation of the stars and also that the equilibrium simulation starts mass transfer at a
+larger radius. The upshot here though is that we can use a larger initial distance even without
+the equilibrium conditions; $f_R = 1.0$ is not clearly the uniquely correct choice for
+``approximate`` initial conditions, as resolvable mass transfer can occur even at larger $f_R$.
+Due to this, and also because equilibrium initial conditions are themselves idealized cases
+(and it is not even fully clear whether binary WDs do become completely tidally locked on the
+relevant evolution timescale), a full understanding of the effect of the initial conditions
+on the outcome of the merger process requires comparing merger simulations that realize more
+fully the possible initial conditions for these systems.
+
+
+
+\subsection{Unsteady Mass Transfer}
+\label{sec:unstable}
+
+\subsubsection{Unequal Mass Merger}
+\label{sec:unstable:unequal}
+
+\subsubsection{Equal Mass Merger}
+\label{sec:unstable:equal}
 
 
 
