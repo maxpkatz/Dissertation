@@ -2558,10 +2558,6 @@ velocity shear along the interface between the fluids. The density and
 velocity distribution on the computational domain are given by:
 
 \begin{figure}[h!]
-  % Note that since we have periods in the filename, we need to double-
-  % bracket the filename so that includegraphics doesn't think it's 
-  % looking for something with the wrong extension. See:
-  % http://tex.stackexchange.com/a/10575
   \centering
   \includegraphics[trim=0.75in 0.45in 0.85in 0.5in, clip, scale = 0.75]{{{plots/kh_t2.0_p2_low_res_collage}}}
   \caption[Kelvin-Helmholtz instability and bulk velocity (Robertson et al.)]
@@ -3672,9 +3668,10 @@ we see that the angular momentum evolution is nearly identical in the rotating f
 and the hybrid evolution. This is a consequence of the rotation source term having a property that the gravitational
 source term does not. Momentum conservation for the latter is violated only to the extent that the cell-centered
 gravitational acceleration does not exactly satisfy the Poisson equation (see \autoref{eq:momentum_discretization}
-and the surrounding text), which is caused by small errors in the Poisson solve. The rotation source term for
-the momentum is coordinate-dependent; specifically, because the coordinates used in determining the Coriolis
-force are cell-centered, there will not be (implied) exact cancellation at zone edges as there is for gravity.
+and the surrounding text), which is caused by small errors in the Poisson solve. By contrast, even though the
+centrifugal force is conservative when integrated over the whole domain, even if it is evaluated at zone centers,
+the rotation source term for the momentum will behave differently if the velocities are evaluated at cell centers.
+There will therefore not be (implied) exact cancellation at zone edges as there is for gravity.
 This could potentially be mollified by changing the way the rotation source term for momentum is applied, but
 that is outside the scope of this work. However, the angular momentum eventually stabilizes (as we confirmed
 by running the simulation a little longer), because the non-conservation effect here depends on the Coriolis
@@ -3757,6 +3754,112 @@ fully the possible initial conditions for these systems.
 \newpage
 \section{Conclusions}
 \label{sec:conclusion}
+
+Reacting, self-gravitating, hydrodynamic flows pose many interesting computational challenges,
+in both computational performance and numerical accuracy. There are outstanding questions of
+numerical stability both in the pure hydrodynamics (\autoref{sec:galileo}) and in the
+reactions (\autoref{sec:unstable_burning}), and fundamental questions about how to
+correctly couple hydrodynamics, gravity, and reactions together given that they operate on
+fundamentally different timescales and have very different effects on the nature of the
+fluid flow. We have seen that failure to pay careful attention to this coupling can lead
+to devastating effects like violation of energy and angular momentum conversation and
+numerically seeded thermonuclear detonations. All of these effects, and more, make it very
+difficult to state with confidence whether a given system is likely to correspond to an
+observed astrophysical explosion based on simulation results. The point of this dissertation
+is therefore not to make definitive statements about the extent to which double white dwarf
+systems contribute to particular events like Type Ia supernovae, but rather to answer the
+question of when we can trust the results of simulations of these events, and to suggest
+computational techniques that improve the legitimacy of these simulations. We hope that our
+work instills the point that one should not simply download a research-grade simulation code
+and use it without understanding the impact of the various choices made in the software.
+
+For merger simulations, we found that the most important stumbling blocks to trustworthy
+simulations are the non-conservation of energy (due to the coupling of the gravitational
+and rotational forces to the hydrodynamics), and the non-conservation of angular momentum.
+Both can play very important effects on the long-term stability of a binary system, and
+also shape the mass transfer phase. It must be emphasized that conservation of angular momentum
+and energy are not always obviously the right things to enforce in a simulation; sometimes
+small violations of these properties can be justified if it means more accurate thermodynamics
+or hydrodynamics on smaller timescales. But if what we are interested in is the long-term
+stability of the flow, then paying attention to the conservation properties is paramount.
+While an angular-momentum-conserving approach (say) may introduce non-physical artifacts into
+the simulation that cause the stellar flow to be inaccurate, they are certainly less disastrous
+than the alternative of ignoring conservation, as this leads to spurious coalescence.
+We have found that the use of a hybrid advection technique that advects angular and radial
+momentum (and therefore conserves the former hydrodynamically) rather than linear momenta
+can be very helpful in improving the conservation properties for angular momentum. And for
+conservation of energy, we found that explicitly constructing the source terms in a conservative
+manner (for example, by evaluating source terms at zone edges where hydrodynamic fluxes actually
+occur rather than zone centers) permits reasonable conservation of energy on much longer
+timescales than was previously possible in our simulations. Future work on the mergers can then
+pay attention to the construction of accurate and physically meaningful initial conditions,
+confident that the issues with the subsequent evolution have been well-characterized.
+
+Collisions of white dwarfs are less challenging from the perspective of the gravity and
+rotation forces, but they easily make up for it in their demand for accurate evolution of
+the nuclear reaction source term. In this work we have characterized two effects that
+play a major role on the accuracy of these simulations. First, the operator splitting
+coupling the hydrodynamics and reaction steps introduces non-physical artifacts due to
+the feeding of fresh, unburned material into the burning region occurring in staggered,
+discrete steps rather than continuously. We have shown that this can have a very large
+effect on the accuracy of a simulation and that using a timestep limiter that accounts
+for this can help limit the effect. However, we also showed that the amount of limiting
+needed to achieve a converged simulation is prohibitively large. Future work should focus
+on more accurate methods of coupling these two updates. Second, low spatial resolution
+introduces the possibility of numerically seeded detonations that bear no resemblance
+to what a physical detonation would look like. However, the correct spatial resolution needed
+to fully avoid this possibility is also quite restrictive (note though that higher
+spatial resolution automatically leads to smaller timesteps due to the CFL stability
+criterion, which may capture some of the temporal resolution effect just described, so
+even adding some resolution will often be worth it even if the full resolution cannot
+be achieved). Furthermore, even adaptive mesh refinement that targets this effect
+can miss a detonation that begins before the refinement has kicked in, and we have shown
+that adding resolution can actually make the result look even more incorrect than
+using low resolution (though this really says that the coarse resolution simulations are
+simply not qualitatively correct, and the fact that they get a plausible answer for
+the head-on collision problem is to some extent a consequence of the nature of the problem).
+Future work should be focusing on efforts that add resolution in the places where it is
+needed rather than resorting to approximate workarounds, but the computational resources
+demanded by this will make it difficult to perform large studies of the collision
+parameter space in three dimensional simulations. At any rate, it is clear that the story
+of explosive burning in hydrodynamics simulations is far from over. This has relevant
+consequences even for the question of whether the inspiral mergers can lead to detonations,
+because simulations that have found detonations in these mergers typically have employed
+spatial resolutions that are far too low to understand the small-scale burning activity.
+It is quite likely that if the requisite resolution were to be added, the location and
+time of any detonations may change substantially, or even reveal the detonation itself
+to be spurious.
+
+More broadly, this dissertation is intended to emphasize that the challenges of
+accurate large-scale hydrodynamical simulations require a rigorous understanding of
+the limitations of these simulations and a serious approach to reproducibility. Much
+of the challenge in comparing results from different simulation methods and academic
+groups is the lack of a common language in which to perform such comparisons, and often
+a lack of motivation to be fully open about the details of the computational methods used
+make it quite difficult to reproduce the work of others. We hope that by publishing fully
+the software we have used for the generation and analysis of our simulation results, we
+are encouraging others to examine our approach and challenge the assumptions we make, in
+addition to the more prosaic but crucially important issues like finding programming errors.
+The only way that this can be achieved is by throwing as much sunlight on what we are doing
+as is possible, so that others who seek to replicate our work do not have much trouble in
+understanding what we did. Even if we ignore the broader concerns about the impact of
+study replicability, there is a simple reason why publishing of the software is important:
+it is not feasible or desirable to list every minor code choice in a research document.
+Publishing the software allows the researcher to safely decide what details are relevant
+to include in the text of a manuscript, and what details are best left for the documentation
+of the software itself, without being concerned that important details about what actually
+went on in the simulations are being hidden.
+
+In conclusion, much work remains to be done in our effort to understand binary white dwarf
+systems and their relevance to Type Ia supernovae. There are important outstanding questions
+about the nature of the progenitors and the initial conditions of the simulation -- for example,
+to what extent do carbon-oxygen white dwarfs have a surface helium layer, and does this helium
+layer impact the viability of explosion in these white dwarfs? Similarly, the interior of the
+white dwarfs is not uniform carbon and oxygen in reality, and results from stellar evolution
+calculations can inform our simulations to be more realistic in this vein. The goal of this
+dissertation was to create a framework for studying these questions that allows us to reliably
+understand whether the results of a given simulation are physically plausible. We hope that the
+tools we have provided in service of this goal are one small step in the right direction.
 
 
 
