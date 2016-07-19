@@ -56,6 +56,8 @@
 \newcommand{\aproxthirteen}{\texttt{aprox13}}
 \newcommand{\aproxnineteen}{\texttt{aprox19}}
 \newcommand{\aproxtwentyone}{\texttt{aprox21}}
+\newcommand{\flash}{\texttt{FLASH}}
+\newcommand{\enzo}{\texttt{ENZO}}
 
 \title{\bf{White Dwarf Mergers on Adaptive Meshes}}
 
@@ -715,9 +717,6 @@ $(E - K) / E < \eta_3$, we use $(E - K)$ in the equation of state call that obta
 temperature; otherwise, we use $e$. However, unlike the other two, the \castro\ default
 is $\eta_3 = 1.0$, meaning that we normally use the internal energy variable.
 
-%TODO: discuss source term predictor?
-%TODO: discuss retries?
-
 
 
 \subsubsection{Hybrid Advection}
@@ -1230,6 +1229,7 @@ is negligible in practice for the values of $l_{\text{max}}$ that we use.
            line to guide the eye.\label{fig:bc_comparison}}
 \end{figure}
 
+\clearpage
 \subsubsection{Convergence Testing}\label{sec:gravity_convergence_testing}
 
 Since the results of a merger simulation depend strongly on gravity,
@@ -1504,7 +1504,8 @@ that included additionally ${}^{60}$Zn. The \aproxnineteen\ network \citep{timme
 builds on \aproxthirteen\ by including isotopes for hydrogen burning and explicit
 tracking of photodisintegration into ${}^{54}$Fe. This network was used by
 \citet{kushnir:2013}, \citet{kushnir:2014}, \citet{rosswog:2009} for their
-calculations with FLASH, and \citet{papish:2015}. Finally we will also
+calculations with \flash\ (a commonly used compressible hydrodynamics code
+in the astrophysics literature), and \citet{papish:2015}. Finally we will also
 consider \aproxtwentyone, which includes all of the above plus ${}^{56}$Cr
 and ${}^{56}$Fe and related reaction links. The primary virtue of using
 the latter two networks is that they allow us to track changes away from
@@ -2063,15 +2064,18 @@ for typical problem setups. While the sponge is applied we should avoid imputing
 meaning to what is happening in the low-density gas far from the stars.
 \begin{figure}
   \centering
-  \includegraphics[scale=0.4]{plots/sponge}
-  \caption{Radial profile of the hydrodynamical sponge we apply (\autoref{eq:sponge_frac}). 
+  \includegraphics[scale=0.8]{plots/sponge}
+  \caption[Radial profile of the hydrodynamical sponge]
+          {Radial profile of the hydrodynamical sponge we apply (\autoref{eq:sponge_frac}). 
            We subtract $f_S$ from unity; the value of $1 - f_S$ indicates what happens 
            to the sponged function after the sponge is applied. The sponge has no effect 
-           in the inner part of the domain, and is fully applied at the outer edge.\label{fig:sponge}}
+           in the inner part of the domain, and is fully applied at the outer edge.
+           \label{fig:sponge}
+          }
 \end{figure}
 
 
-
+\clearpage
 \subsubsection{Collisions}
 \label{sec:initial_state:collisions}
 
@@ -2142,8 +2146,30 @@ temperature is $10^7\ \text{K}$, which is the same as the initial temperature
 everywhere throughout the WDs, and we set the temperature floor to the same
 value.
 
+\autoref{fig:initial_collision_state} shows the temperature and density profile
+of the WDs in the 2D collision just as they are making contact at $t = 5$ s. Note
+two interesting features: first, the temperature is mostly cold (at the temperature floor)
+for the inner edges of the WDs, but warmer (well above the initial temperature) for the
+outer edges of the WD; second, there is a trailing wake of material left behind the
+stars as they move toward each other. These are both manifestations of the Galilean
+invariance violations described in \autoref{sec:galileo}, where the leading and trailing
+edges of the WDs have numerical differences in their evolution as a consequence of
+moving through the simulation at high speed in a particular direction.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/rho_T_slice_center_tagging_r1_t_5.01}}}
+  \caption[2D collision at initial contact]
+          {Temperature $T$ and density $\rho$ for the 2D collision as the
+           WDs make initial contact. The domain is mirrored with respect to
+           the $r = 0$ symmetry plane for visual purposes; the actual simulation
+           domain is only the size of one of the two half-planes.
+           \label{fig:initial_collision_state}
+          }
+\end{figure}
 
 
+\clearpage
 \subsection{Analysis}
 \label{sec:analysis}
 
@@ -2378,6 +2404,7 @@ the intrinsic numerical instability of the stars.
            \label{fig:single_star_static_ke}}
 \end{figure}
 
+\clearpage
 \subsection{Gravitational Free Fall}
 \label{sec:Gravitational Free Fall}
 
@@ -2451,7 +2478,7 @@ actually is a significant concern for our study.
 that (at low resolution) a fixed-grid code failed to develop the
 expected fluid instability when the whole fluid was moving at a
 strongly supersonic uniform velocity. (See also \citet{wadsley:2008}, 
-who used the FLASH code to simulate a hot bubble subject to mixing 
+who used the \flash\ code to simulate a hot bubble subject to mixing 
 by the Kelvin-Helmholtz instability, and also found that the mixing was affected by a 
 uniform bulk velocity.) This contrasted with the results
 of the moving-mesh code AREPO being presented in that study, which
@@ -2507,8 +2534,8 @@ affects the stability of the star. This concern is prompted by the
 study of \cite{tasker:2008}, who studied the effect of uniform
 translation on the stability of a spherically symmetric model for a
 galaxy cluster. They compared the radial profile of the cluster at
-initialization and after a period of time evolution. Using FLASH and
-ENZO, they found that a static cluster retains its shape at high
+initialization and after a period of time evolution. Using \flash\ and
+\enzo, they found that a static cluster retains its shape at high
 enough resolution, while uniform translation of the cluster causes
 mixing of the core material due to numerical diffusion which results
 in an underestimation of the core's true density. The SPH codes they
@@ -2700,6 +2727,7 @@ in these regions using AMR. If this becomes too expensive, we would need to be
 skeptical of any conclusions that could be drawn 
 about the effect of the mixing on the nuclear burning.
 
+\clearpage
 \subsubsection{Moving Star}
 \label{sec:moving_star}
 
@@ -3002,7 +3030,7 @@ same effective mass resolution. Instead the number of zones inside each star sho
 
 
 
-\newpage
+\clearpage
 \section{Parallel Performance}
 \label{sec:performance}
 
@@ -3147,7 +3175,7 @@ at very large processor counts when self-gravity is considered.
 
 
 
-\newpage
+\clearpage
 \section{White Dwarf Collisions}
 \label{sec:collisions}
 
@@ -3345,7 +3373,8 @@ total energy such that the internal energy variable is always kept in sync with 
 (We did not look at $\eta_1$ because that has a direct effect only on the hydrodynamics,
 not the reactions.) We also tested whether our choice for the temperature floor mattered
 by lowering it to $10^6\ \text{K}$ and $10^5\ \text{K}$, and this had no effect on nickel
-production. It does allow parts of the WDs to become colder as they move, due to numerical
+production. It does allow parts of the WDs to become colder as they move (see
+\autoref{fig:initial_collision_state}), due to numerical
 errors in the advecting flow (the Helmholtz equation of state is very insensitive to
 temperature, so even small changes in the internal energy can create very large changes
 in the implied temperature), but the amount of energy injected by the collision is so
@@ -3373,8 +3402,110 @@ and a non-uniform interior structure.
 \subsection{Resolution Dependence}
 \label{sec:collision_resolution}
 
+To test the effect of adaptive mesh refinement based on the burning rate, specifically
+based on the criterion in \autoref{eq:burning_limiter_2} with the safety factor set to
+$f_s = 0.1$, we performed a series of 2D calculations starting with the coarse grid and
+allowing refinement up to a predetermined maximum jump in refinement. Each successive
+run allowed a factor of two jump in refinement relative to the last. For this set we did
+not enable timestep limiting other than the usual hydrodynamic limiting. We plot the nickel
+production from this series of runs in \autoref{fig:dxnuc_nickel}. The additional resolution yields
+a nearly monotonic increase in the nickel production, which is modulated both by the smaller
+timestep on the finer levels and by the detonation being effectively slowed down by the
+ability of the zones to more quickly disperse over-pressure generated by the nuclear burning.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/dxnuc_m_P_0.64_m_S_0.64}}}
+  \caption[Nickel production as a function of refinement based on burning rate]
+          {$^{56}$Ni production as a function of the maximum refinement factor
+           relative to the coarse grid. Refinement is only applied after
+           \autoref{eq:burning_limiter_2} is violated, and typically maximal
+           refinement is achieved for the duration of the explosive burning.
+           \label{fig:dxnuc_nickel}
+          }
+\end{figure}
+
+Taking a cue from \cite{kushnir:2013}, we also examined the nature of the detonation itself.
+For the default collision case we use, the detonation occurs at approximately $t = 7.5$ seconds
+(this is offset by about 5 seconds compared to \citeauthor{kushnir:2013} because they started
+the WDs at a smaller initial distance). \autoref{fig:dxnuc_detonation} is a plot of the inner
+10\% of the domain 0.05 seconds after the detonation initiated, for the case of refinement by
+a factor of 32.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/rho_T_slice_dxnuc_zoomed_r32_t_7.52}}}
+  \caption[Initial detonation when refinement is based on burning rate]
+          {Snapshot of the detonation formation (the bright region in the
+           temperature field centered at $z = 0$). Refinement is based on the unstable
+           burning criterion, with a maximal jump in refinement of 32 with
+           respect to the coarse grid (effective resolution of 12.5 km).
+           \label{fig:dxnuc_detonation}
+          }
+\end{figure}
+
+However, the coarseness of the resolution means that there is an effective floor on any
+detonation that is seeded by the coarse grid of 400 km. (Recall that the AMR criterion does
+not take effect until after the unstable burning has begun.) If the actual scale for the
+detonation formation is smaller than this, then the coarse grid hides the details of this
+small-scale process, but in so doing may yield an inaccurate result for the nature of the
+detonation. To study the effect of the small-scale burning physics, we swapped the adaptive
+mesh refinement technique for a static one: maximally refine all zones within a radius of
+200 km from the center, up to the specified maximum amount of refinement permitted on the
+domain. The radius is chosen based on the finding of \citeauthor{kushnir:2013} that their
+detonation occurs within that distance. The nickel production for this case is documented
+in \autoref{fig:center_tagging_nickel}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/center_tagging_m_P_0.64_m_S_0.64}}}
+    \caption[Nickel production as a function of static central refinement]
+          {$^{56}$Ni production as a function of the maximum refinement factor
+           relative to the coarse grid. Refinement is applied statically for
+           all zones near the center of the domain.
+           \label{fig:center_tagging_nickel}
+          }
+\end{figure}
+
+The stark difference in this case, where at sufficient resolution very little nickel is generated,
+is a consequence of the detonation occurring at a much earlier time ($\sim 6.7$ seconds). The high
+density regions corresponding to the WD centers of mass are thus further away from the detonation,
+so processing to NSE is largely precluded. Instead, there is efficient conversion of carbon into
+silicon and sulfur material, but this event would look very different from a Type Ia supernova,
+despite releasing enough energy to unbind the system. A snapshot of the inner 5\% of the domain is
+shown in \autoref{fig:center_tagging_detonation} immediately after detonation has initiated. We find
+that the early burning phase is characterized by a high temperature region at the center of the stalled
+shock, which contains several local hotspots. The hotspots are not symmetrical with respect to $z = 0$
+even though the initial problem setup is, which may reflect a lack of perfect symmetry in the hydrodynamics
+algorithm we use or seeding by numerical error. The resolution in the detonation region is 6.25 km,
+which is comparable to the resolution used by \citeauthor{kushnir:2013} in \flash. The major difference
+between our result and theirs is their use of the suppressed burning mode. Even for a refinement factor
+of 64, the sound-speed timescale $t_s$ is significantly longer than the energy injection timescale $t_s$
+when the detonation forms, so there is evidence that this detonation is likely a numerical artifact.
+The ratio of $t_s$ to $t_e$ trends downward with resolution at the initial detonation, and based on our
+data would likely cross under unity when the resolution hits $\sim 1$ km. This lends support to the
+basic conclusion that the nickel production is a strong function of when and where the detonation occurs,
+with earlier detonations at small $z$ leading to lower amounts of nickel production. In this paradigm
+we can then explain why the nickel production levels are at least within the same ballpark (a factor of
+two compared to \citeauthor{kushnir:2013} and \citet{raskin:2010}) for the initially low resolution
+runs that are tagged for refinement after the detonation occurs: the coarse size of the zones prevents
+the detonation from occurring too early and too close to the center.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/rho_T_slice_center_tagging_zoomed_r64_t_6.65}}}
+  \caption[Initial detonation for static central refinement]
+          {Snapshot of the detonation formation. The detonation is visible as a small,
+           high-temperature region near $z = 0$ and $r = 0$. Refinement is applied
+           statically for all zones near the center, with a maximal jump in refinement
+           of 64 with respect to the coarse grid (effective resolution of 6.25 km).
+           \label{fig:center_tagging_detonation}
+          }
+\end{figure}
 
 
+
+\clearpage
 \subsection{Gravitational Wave Signature}
 \label{sec:collision_gravitational_waves}
 
