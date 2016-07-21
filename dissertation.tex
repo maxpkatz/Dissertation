@@ -3742,17 +3742,127 @@ fully the possible initial conditions for these systems.
 
 
 \subsection{Unsteady Mass Transfer}
-\label{sec:unstable}
+\label{sec:mergers:unstable}
+
+Here we briefly consider results for mergers that are immediately unstable to mass transfer.
+Because of the above caveats about the initial conditions, these tests should not be considered
+representative of how the mergers would physically occur, but we include these for completeness.
+Future work will compare these results against more accurate initial conditions.
 
 \subsubsection{Unequal Mass Merger}
-\label{sec:unstable:unequal}
+\label{sec:mergers:unstable:unequal}
 
+To obtain unstable mass transfer on a short simulation timescale, we repeated the test of
+\autoref{sec:mergers:stable}, for a $0.9\ \msolar$ primary and $0.6\ \msolar$ secondary, with the
+change $f_R = 0.9$, so that the stellar centers of mass are 10\% closer to each other. This
+is a very significant change, as now much of the secondary is overflowing its Roche lobe and
+substantial mass transfer begins immediately; the mass transfer rate reaches
+$10^{-3}\ \msolar\ \text{s}^{-1}$ in under five seconds. We ran the test with an effective
+$512^3$ zone, 200 km resolution for the hybrid advection case only, in both the inertial and
+rotating frames. Snapshots of the evolution in both frames are found in
+\autoref{fig:unsteady_mass_transfer_unequal_inertial} and
+\autoref{fig:unsteady_mass_transfer_unequal_rotating}, respectively. The initial
+equivalent Keplerian orbital period for this system is 52 seconds, so the timescale for
+complete disruption of the secondary is about three orbital periods.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.61]{{{plots/merger_time_series_m_P_0.90_m_S_0.60_roche_0.90_rot_0_hybrid_1_n_512}}}
+  \caption[Density evolution, unequal mass merger ($f_R = 0.90$, inertial frame)]
+          {Density evolution for the unequal mass merger starting with $f_R = 0.9$.
+           The view is a slice plot of the $z = 0$ plane. The evolution is in the
+           inertial frame. For visual clarity we show only the inner 75\% of the domain.
+           The simulation time is displayed in the upper left corner of each pane.
+           \label{fig:unsteady_mass_transfer_unequal_inertial}
+          }
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.61]{{{plots/merger_time_series_m_P_0.90_m_S_0.60_roche_0.90_rot_1_hybrid_1_n_512}}}
+  \caption[Density evolution, unequal mass merger ($f_R = 0.90$, rotating frame)]
+          {Density evolution for the unequal mass merger starting with $f_R = 0.9$.
+           The view is a slice plot of the $z = 0$ plane. The evolution is in the
+           rotating frame. For visual clarity we show only the inner 75\% of the domain.
+           The simulation time is displayed in the upper left corner of each pane.
+           In this plot we have not transformed back to the inertial frame. 
+           \label{fig:unsteady_mass_transfer_unequal_rotating}
+          }
+\end{figure}
+
+\autoref{fig:unsteady_gw_signal_unequal} shows the gravitational wave signal for this event. The
+signal has the expected characteristics for such an event: initially, the signal has a
+constant amplitude and an oscillation period equal to half the orbital frequency. As
+significant mass transfer sets in, the frequency increases because of rapid coalescence,
+and then the system eventually relaxes to an equilibrium (the ringdown phase). 
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/merger_gw_signal_m_P_0.90_m_S_0.60_roche_0.90_rot_0_hybrid_1_n_512}}}
+  \caption[Gravitational wave signal, unequal mass merger ($f_R = 0.90$)]
+          {Gravitational wave strain for the unequal mass merger starting with $f_R = 0.9$.
+           From top to bottom, we show the $+$ and $\times$ polarizations for observers
+           at 10 kpc along the $x$, $y$, and $z$ axes respectively.
+           \label{fig:unsteady_gw_signal_unequal}
+          }
+\end{figure}
+
+
+
+\clearpage
 \subsubsection{Equal Mass Merger}
 \label{sec:unstable:equal}
 
+Equal-mass mergers are physically unlikely to occur, but are convenient for
+simulation purposes because of their symmetry, and are maximally unstable against
+mass transfer so they provide a limiting case for how violent the coalescence phase is.
+We use two $0.9\ \msolar$ mass stars for the simulation shown here, again with $f_R = 0.9$
+and an effective 200km resolution. The inertial frame evolution is displayed in
+\autoref{fig:unsteady_mass_transfer_equal_inertial} and the rotating frame evolution is
+displayed in \autoref{fig:unsteady_mass_transfer_equal_rotating}. The initial Keplerian
+orbital period for this system is 24 seconds, so the coalescence has essentially completed,
+leaving a single merged remnant, within two orbital periods. The corresponding gravitational
+wave signal is shown in \autoref{fig:unsteady_gw_signal_equal}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.61]{{{plots/merger_time_series_m_P_0.90_m_S_0.90_roche_0.90_rot_0_hybrid_1_n_512}}}
+  \caption[Density evolution, equal mass merger ($f_R = 0.90$, inertial frame)]
+          {Density evolution for the equal mass merger starting with $f_R = 0.9$.
+           The view is a slice plot of the $z = 0$ plane. The evolution is in the
+           inertial frame. For visual clarity we show only the inner 75\% of the domain.
+           The simulation time is displayed in the upper left corner of each pane.
+           \label{fig:unsteady_mass_transfer_equal_inertial}
+          }
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.61]{{{plots/merger_time_series_m_P_0.90_m_S_0.90_roche_0.90_rot_1_hybrid_1_n_512}}}
+  \caption[Density evolution, equal mass merger ($f_R = 0.90$, rotating frame)]
+          {Density evolution for the equal mass merger starting with $f_R = 0.9$.
+           The view is a slice plot of the $z = 0$ plane. The evolution is in the
+           rotating frame. For visual clarity we show only the inner 75\% of the domain.
+           The simulation time is displayed in the upper left corner of each pane.
+           In this plot we have not transformed back to the inertial frame. 
+           \label{fig:unsteady_mass_transfer_equal_rotating}
+          }
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.8]{{{plots/merger_gw_signal_m_P_0.90_m_S_0.90_roche_0.90_rot_0_hybrid_1_n_512}}}
+  \caption[Gravitational wave signal, equal mass merger ($f_R = 0.90$)]
+          {Gravitational wave strain for the unequal mass merger starting with $f_R = 0.9$.
+           From top to bottom, we show the $+$ and $\times$ polarizations for observers
+           at 10 kpc along the $x$, $y$, and $z$ axes respectively.
+           \label{fig:unsteady_gw_signal_equal}
+          }
+\end{figure}
 
 
-\newpage
+
+\clearpage
 \section{Conclusions}
 \label{sec:conclusion}
 
