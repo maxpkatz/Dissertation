@@ -6,7 +6,7 @@
 \usepackage{tree-dvips}
 \usepackage[nottoc]{tocbibind}
 \usepackage{natbib}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{amsmath}
 \usepackage{amstext}
 \usepackage{bm}
@@ -58,6 +58,7 @@
 \newcommand{\aproxtwentyone}{\texttt{aprox21}}
 \newcommand{\flash}{\texttt{FLASH}}
 \newcommand{\enzo}{\texttt{ENZO}}
+\newcommand{\arepo}{\texttt{AREPO}}
 
 \title{\bf{White Dwarf Mergers on Adaptive Meshes}}
 
@@ -100,22 +101,22 @@
 \vspace*{2\baselineskip}
 \centerline{Maximilian Peter Katz}
 \vspace*{2\baselineskip}
-\centerline{We, the dissertation committe for the above candidate for the}
+\centerline{We, the dissertation committee for the above candidate for the}
 \vspace*{1\baselineskip}
 \centerline{Doctor of Philosophy degree, hereby recommend}
 \vspace*{1\baselineskip}
 \centerline{acceptance of this dissertation}
 \vspace*{2\baselineskip}
-\centerline{\bf{Michael Zingale - Dissertation Advisor}}
+\centerline{\bf{Michael Zingale -- Dissertation Advisor}}
 \centerline{\bf{Associate Professor, Physics and Astronomy}}
 \vspace*{2\baselineskip}
-\centerline{\bf{Alan Calder - Chairperson of Defense}}
+\centerline{\bf{Alan Calder -- Chairperson of Defense}}
 \centerline{\bf{Associate Professor, Physics and Astronomy}}
 \vspace*{2\baselineskip}
-\centerline{\bf{Joanna Kiryluk - Committee Member}}
+\centerline{\bf{Joanna Kiryluk -- Committee Member}}
 \centerline{\bf{Assistant Professor, Physics and Astronomy}} 
 \vspace*{2\baselineskip}
-\centerline{\bf{Marat Khairoutdinov - External Committee Member}}
+\centerline{\bf{Marat Khairoutdinov -- External Committee Member}}
 \centerline{\bf{Associate Professor, School of Marine and Atmospheric Sciences}}
 \vspace*{2\baselineskip}
 \centerline{This dissertation is accepted by the Graduate School}
@@ -252,20 +253,22 @@ Science and Engineering. They were core developers of the software that
 I used for the simulations in this work, but they were also wonderful resources 
 for sounding off new ideas and figuring out how to implement many of the 
 algorithms I considered over the years. John Bell at LBL also provided useful
-insight on several topics.
+insight on several topics. Frank Timmes too was an invaluable resource, who
+took the time to answer a number of my questions on his microphysics routines;
+I thank him for this, and his permission to use his software in our code.
 
-Much of the material in this dissertation, especially in \autoref{sec:introduction},
+Much content in this dissertation, especially in \autoref{sec:introduction},
 \autoref{sec:methodology}, \autoref{sec:verification}, and \autoref{sec:performance},
-originally appeared in the \textit{Astrophysical Journal} \citep{wdmergerI}. The content
+is drawn from an article in the \textit{Astrophysical Journal} \citep{wdmergerI},
+with minor edits to update for later adjustments to the code or for clarity. The content
 from \autoref{sec:network}, \autoref{sec:burning} and \autoref{sec:collisions} contains draft content from
-a paper to be submitted to the \textit{Astrophysical Journal} entitled ``White Dwarf Mergers on
+a paper to be submitted to the \textit{Astrophysical Journal}, ``White Dwarf Mergers on
 Adaptive Meshes. II. Collisions and Nuclear Burning'' (Max P. Katz, Michael Zingale,
 Alan C. Calder, F. Douglas Swesty, Ann S. Almgren, Weiqun Zhang, Frank X. Timmes).
 The content from \autoref{sec:mergers} contains draft content from a paper to be
-submitted to the \textit{Astrophysical Journal} entitled ``White Dwarf Mergers on Adaptive
+submitted to the \textit{Astrophysical Journal}, ``White Dwarf Mergers on Adaptive
 Meshes. III. Inspiral and Coalescence'' (Max P. Katz, Michael Zingale, Alan C. Calder,
-F. Douglas Swesty, Ann S. Almgren, Weiqun Zhang). I thank the Institute of Physics
-for its permission to reproduce the material.
+F. Douglas Swesty, Ann S. Almgren, Weiqun Zhang).
 
 This research was supported by NSF award AST-1211563. An
 award of computer time was provided by the Innovative and Novel
@@ -289,17 +292,13 @@ the Empire State Development grant NYS \#28451.
 This work used the Extreme Science and Engineering Discovery Environment (XSEDE), 
 which is supported by National Science Foundation grant number ACI-1053575. 
 Project AST100037 supported use of the resources NICS/Kraken and NICS/Darter.
-
-Special thanks are given to the organizers of the 2015 Caltech
-Gravitational Wave Astrophysics School, and their supporters:
-the NSF under CAREER award PHY-1151197, the Sherman Fairchild 
-Foundation, the LIGO Laboratory at Caltech, and Caltech. I also
-would like to acknowledge the developers of the stellar evolution
-software MESA for accepting me to their workshop in 2012 and
-inviting me back as a teaching assistant in 2013.
-
 This research has made use of NASA's Astrophysics Data System 
 Bibliographic Services.
+
+Special thanks are given to the organizers of the 2015 Caltech
+Gravitational Wave Astrophysics School, and to Bill Paxton and the
+rest of the MESA stellar evolution team for accepting me to their
+workshop in 2012 and inviting me back as a teaching assistant in 2013.
 
 
 
@@ -323,13 +322,14 @@ community was the single-degenerate (SD) model
 \citep{whelan-iben:1973}. Accretion of material from a companion star
 such as a red giant would cause the star to approach the Chandrasekhar
 mass, and in doing so the temperature and density in the center would
-become sufficient for thermonuclear fusion to proceed. In
-recent years the focus has shifted to a number of alternative progenitor models.
-For example, another is the double detonation scenario, where accretion of material onto a
-sub-Chandrasekhar mass white dwarf leads to a detonation inside the
-accreted envelope, sending a compressional wave into the
-core of the star that triggers a secondary detonation. A
-leading candidate for explaining at least some of these explosions is
+become sufficient for thermonuclear fusion to proceed. In the last decade,
+though significant research on the single-degenerate model has
+continued, the focus has shifted to a number of alternative progenitor models.
+For example, a competing model is the double detonation scenario \citep{livne:1990,woosley:1994},
+where accretion of material onto a sub-Chandrasekhar mass white dwarf
+leads to a detonation inside the accreted envelope, sending a compressional
+wave into the core of the star that triggers a secondary detonation. We focus here
+on another leading candidate for explaining at least some of these explosions,
 the double-degenerate (DD) model, in which two white dwarfs merge and
 the merged object reaches the conditions necessary for a thermonuclear
 ignition \citep{ibentutukov:1984,webbink:1984}. These systems
@@ -341,8 +341,14 @@ the outer star can prompt mergers as well \citep{thompson:2011,hamers:2013}. The
 occur due to perturbations in the eccentricity of the binary orbit caused by the outer
 star, which significantly increase the gravitational wave emission of the system. In a
 subset of these mergers the eccentricity may be driven to such a high value that the
-merger resembles a head-on collision of the binary WDs. A recent review of the progenitor
-models can be found in \citet{hillebrandt:2013}.
+merger resembles a head-on collision of the binary WDs. For the purposes of the
+rest of this work, we will adopt the simplified terminology that  ``mergers'' are
+systems that start in approximately circular orbits, where the circular orbit
+gradually decays (for example, due to gravitational wave emission or some other
+damping force) and leads to inspiral and coalescence, while ``collisions'' will
+refer to head-on (or nearly head-on) impacts (despite the fact that there is
+clean boundary between collisions and mergers). A recent review of Type Ia
+supernova (SN Ia) progenitor models can be found in \citet{hillebrandt:2013}.
 
 There are several observational reasons why double-degenerate systems
 are a promising progenitor model for at least a substantial fraction
@@ -361,6 +367,9 @@ were formed, since the progenitor systems only become active once both
 stars have evolved off the main sequence. A thorough review of the
 observational evidence about SNe Ia and further discussion of these
 ideas can be found in \cite{maoz:2014}.
+
+\subsection{Simulations of Mergers}
+\label{sec:merger_simulations}
 
 The first attempts to model the results of the merger process came in the
 1980s. \cite{nomotoiben:1985} demonstrated that off-center carbon
@@ -489,6 +498,9 @@ white dwarf. For now there is preliminary support for the hypothesis
 that systems with helium shells (or helium WDs), and very massive carbon-oxygen binaries,
 could robustly lead to events resembling SNe Ia.
 
+\subsection{Simulation of Collisions}
+\label{sec:collision_simulations}
+
 With regard to WD collisions, over the past few years a number of groups have performed simulations
 to understand whether they may yield astrophysical transients that look like SNe Ia
 \citep{rosswog:2009,raskin:2010,loren-aguilar:2010,hawley:2012,garcia-senz:2013,
@@ -505,31 +517,37 @@ elements that varied significantly, leaving much uncertainty about how such an e
 would appear observationally and whether it bears any resemblance to a SN Ia.
 See Table 4 of \cite{garcia-senz:2013} for a summary of the outcome of many of these studies.
 
+\subsection{Motivation}
+\label{sec:motivation}
+
 Given the considerable research into the double degenerate problem 
 described above, why is another approach using a different simulation
 code warranted? First and foremost, reproducibility of the results
 across simulation codes and algorithms is important for gauging
-confidence in this result. Most of the existing results that study 
+confidence in this result. So it is always worth trying the same
+problem with a different code; at best, it simultaneously tests the
+simulation code and the model, and if multiple groups using multiple
+simulation methods obtain similar results, that builds confidence
+in the model (or, if not, means that further research is warranted).
+As an example of why this matters, most of the existing results that study 
 the viability of double degenerate systems as progenitors for
-Type Ia supernovae (that is, including a realistic 
-equation of state and nuclear reactions) have
-used the SPH method. SPH codes have a number of features which do aid
-them in the study of these systems, such as conservation of
-angular momentum to machine precision when there are no source terms
-such as gravity (and conservation proportional to the level of
-tolerance of error in the gravity solver when gravity is used).
-A drawback relates to the fact that whether a prompt detonation
+Type Ia supernovae (that is, including a realistic equation of state
+and nuclear reactions) have used the SPH method. SPH codes have a
+number of features which do aid them in the study of mergers, such
+as conservation of angular momentum to machine precision when there
+are no source terms such as gravity (and conservation proportional
+to the level of tolerance of error in the gravity solver when gravity
+is used). A drawback relates to the fact that whether a prompt detonation
 in a merger happens depends in detail on the nature of the
 gas at the interface between the two stars, which is at much lower
 density than the rest of the stellar material. The SPH codes for these
-simulations generally all use
-uniform mass particles, so their effective resolution is
-\textit{lowest} at the stellar surface. In contrast, a code
-with adaptive mesh refinement can zoom in on the regions where
-hotspots will develop, while also maintaining high enough resolution
+simulations generally all use uniform mass particles, so their
+effective resolution is \textit{lowest} at the stellar surface. In
+contrast, a code with adaptive mesh refinement can zoom in on the regions
+where hotspots will develop, while also maintaining high enough resolution
 in the high-density regions to adequately capture the large-scale mass
-transfer dynamics. There are also outstanding questions of
-convergence in SPH (e.g.\ \citealt{zhu-SPH:2014}) and whether the method
+transfer dynamics. There are also outstanding questions of convergence
+in SPH (e.g.\ \citealt{zhu-SPH:2014}) and whether the method
 correctly captures fluid instabilities. This is an important question
 for white dwarf mergers because of the likely importance small-scale
 instabilities will have on the evolution of the low-density gas at the
@@ -552,7 +570,7 @@ simulation has self-consistently resulted in a thermonuclear detonation.
 And, as we shall see in \autoref{sec:collisions}, there are reasons to be
 deeply skeptical of detonations that appear in simulations with the typical
 level of resolution affordable on today's supercomputers. At any rate,
-Reproducibility of the detonation through numerical simulation is critical
+reproducibility of the detonation through numerical simulation is critical
 for building confidence in this progenitor model.
 
 This dissertation is the culmination on an effort designed to address these
@@ -560,15 +578,14 @@ outstanding theoretical issues for white dwarf mergers and collisions. This work
 discusses the verification of our hydrodynamics software for simulating
 these events. \autoref{sec:methodology} describes the algorithms used by our
 hydrodynamics software and why this software can provide useful results compared to
-other methodologies used for this problem. 
-\autoref{sec:software} describes the method we use for setting up a
-binary white dwarf simulation. \autoref{sec:verification} discusses a few
-test problems that we use to verify that our code accurately
-solves the equations of fluid dynamics. \autoref{sec:performance}
-demonstrates that the software scales well for supercomputer
-applications. In \autoref{sec:collisions} we discuss our results for
-collisions of white dwarfs, and in \autoref{sec:mergers} we discuss
-our results for mergers of white dwarsf. Finally, \autoref{sec:conclusion}
+other methodologies used for this problem. \autoref{sec:software} describes
+the method we use for setting up a binary white dwarf simulation.
+\autoref{sec:verification} discusses a few test problems that we use
+to verify that our code accurately solves the equations of fluid dynamics.
+\autoref{sec:performance} demonstrates that the software scales well for
+supercomputer applications. In \autoref{sec:collisions} we discuss our
+results for collisions of white dwarfs, and in \autoref{sec:mergers} we
+discuss our results for mergers of white dwarfs. Finally, \autoref{sec:conclusion}
 recaps what we have shown and highlights some of the future work that
 could be done.
 
@@ -579,12 +596,12 @@ could be done.
 \label{sec:methodology}
 
 To study the white dwarf merger problem, we use the mesh-based
-hydrodynamics code \castro\footnote{\castro\ can be obtained at \url{https://github.com/BoxLib-Codes/Castro}.} \citep{castro}.
-\castro\ solves the Euler
-equations, along with the inclusion of optional modules for gravity,
+hydrodynamics code \castro\footnote{\castro\ can be obtained at
+\url{https://github.com/BoxLib-Codes/Castro}.} \citep{castro}.
+\castro\ solves the Euler equations, along with the inclusion of optional modules for gravity,
 nuclear reactions and thermodynamics. \castro\ is based on the \boxlib
 \footnote{\boxlib\ can be obtained at \url{https://github.com/BoxLib-Codes/BoxLib}.}
-adaptive-mesh refinement (AMR) framework \citep{rendleman:2000}, which
+adaptive-mesh refinement (AMR) framework \citep{rendleman:2000,boxlib-tiling}, which
 represents fluid data on a hierarchical mesh where regions of interest have higher
 spatial resolution. \castro\ is highly parallel and is designed for
 large-scale use on modern supercomputers; see 
@@ -592,9 +609,10 @@ large-scale use on modern supercomputers; see
 problem. The next few subsections describe our approach to each of the
 physics components used in this work. We direct the reader to the
 original code paper for a full description of \castro's approach to
-solving the equations of hydrodynamics. In this work, we report mainly
-on the changes we have made to the code since its original release,
-for the purpose of approaching this problem.
+solving the equations of hydrodynamics. Rather than reproducing that
+discussion here, we report mainly on the changes we have made to the
+code since its original release for the purpose of approaching this problem,
+and the aspects most relevant to binary white dwarf simulations.
 
 \subsection{Hydrodynamics}
 \label{sec:hydrodynamics}
@@ -611,26 +629,45 @@ total specific energy, where $e$ is the internal (thermal) specific
 energy (energy per unit mass).
 
 We use the unsplit piecewise-parabolic method (PPM) solver in \castro\
-to advance the hydrodynamics system in time \citep{ppmunsplit}.  A
-number of changes were made to the solver, which are detailed in Appendix A
-of \cite{wdmergerI}.
-These changes bring the algorithm more in line with that of
-\cite{ppm}. \castro\ as originally released featured a slightly modified
-version of the higher resolution limiters of
-\cite{colella-sekora:2008}, which can be used in the code by setting 
-\texttt{castro.ppm\_type = 2} in the inputs file (the inputs file is
+to advance the hydrodynamics system in time \citep{ppmunsplit}. The PPM method
+is a specific case of the general class of Godunov algorithms \citep{godunov:1959}
+where the fluid state is updated by fluxes across the interfaces between zones.
+To determine the flux at an interface, we estimate of the value of the state at
+the interface as it would be predicted from fluid data on either side of the interface,
+and solve the Riemann problem to resolve the discontinuity between the two edge
+states. The art of the method is in determining appropriate edge states to feed into
+the Riemann solver that computes the flux. PPM estimates a reconstruction of a
+state variable as a parabolic profile, limits the parabolic profile so that it doesn't
+introduce new extrema in the state, and then determines the value of that
+parabolic profile on the zone edge. (Note that the PPM reconstruction and Riemann solve
+is done using the so-called ``primitive'' variables ($\rho$, $\mathbf{u}$, $e$, \ldots) rather
+than the ``conserved'' variables ($\rho$, $\rho \mathbf{u}$, $\rho e$, \ldots), and the
+hydrodynamic update to the conserved variables is constructed using the final values of the primitive
+variables.) This is then used to predict the final edge state
+that goes into the Riemann solver. A number of changes have been made to the
+PPM solver since the release of \castro, which are detailed in Appendix A of
+\cite{wdmergerI}. These changes bring the algorithm more in line with that of
+the original PPM paper, \cite{ppm}. \castro\ as originally released featured a slightly modified
+version of the higher order parabolic profile limiter of \cite{colella-sekora:2008},
+which can be used in the code\footnote{In a few cases we will refer to
+specific code parameters in this dissertation. As code parameters can change
+when software is updated over time, the specific parameters may be changed
+in meaning or have been removed in later releases. Therefore, the meaning
+of the inputs parameters should be interpreted based on the state of the
+simulation software as of the publication date of this dissertation.} by
+setting \texttt{castro.ppm\_type = 2} in the inputs file (the inputs file is
 a set of code parameters accessed at runtime to determine the algorithms
-used in the simulation). The advantage of this limiter is that
-it preserves physical extrema rather than clipping them off as in the
+used in the simulation). The advantage of this limiter is that it is intended
+to preserve physical extrema rather than clipping them off as in the
 original approach of \cite{ppm}. Despite the advantages of this limiter 
 we have found it to be unsatisfactory for our problem. There are many regions in our
 problem with large density gradients (such as the interface between
 the star's atmosphere and the ambient gas outside of it) and in these
 regions the algorithm can yield negative densities. This often results
-from the limiters interpreting these gradients as being true
-minima. As a result, we use the original limiter, which is strictly
-monotonicity preserving in the parabolic profiles it generates; this
-is activated with \texttt{castro.ppm\_type = 1} in the inputs file.
+from the limiters interpreting these gradients as being true minima.
+As a result, we use the original limiter, which is strictly monotonicity
+preserving in the parabolic profiles it generates; this is activated with
+\texttt{castro.ppm\_type = 1} in the inputs file.
 
 A related issue that required a code improvement is that in cases of
 large density gradients such as the edge of a star, it is possible to
@@ -641,26 +678,34 @@ density flux in the ambient zones can be large enough to unphysically
 drag the density below zero. In practice, this occurs at the
 trailing edge of a star that is moving across a grid. In such a
 situation, there are two main approaches one could take: either
-explicitly introduce a positivity-guaranteeing diffusive flux, or
-reset the properties of the affected zone. We choose the latter
-approach. Even though it is non-conservative, it preserves a
-characteristic we value, which is to keep the edge of the stars
-relatively sharp, as they physically should be. Since the mass of the
-affected zones is typically already fairly low, this should not
+explicitly introduce a generic diffusive flux term that ensures
+positivity preservation everywhere, or take a specific action to
+prevent zones from retaining a negative density in the specific places
+where it occurs as the simualtion progresses. We choose the latter
+approach, and implement it in two ways. If the sum of all fluxes that
+would cause the density in the zone to decrease is large enough that the
+density would drop below a pre-determined density floor (which is typically
+$10^{-5}\ \text{g cm}^{-3}$ for our stellar simulations), we reduce
+the magnitude of the fluxes to the point where the density would remain
+above the density floor. While this may be non-conservative, it preserves a
+characteristic we value compared to the generic diffusive flux, which is that
+it only operates on the zones it is needed for, and thus helps to keep the
+edge of the stars relatively sharp, as they physically should be. Also, since
+the mass of the affected zones is typically already fairly low, this should not
 seriously affect the dynamics or the energy conservation properties of our
-simulation. Our strategy for a reset is as follows: when the density of 
-a zone is below a pre-determined density floor (which is typically 
-$10^{-5}\ \text{g cm}^{-3}$ for our stellar simulations), we look
-at all adjacent zones and find the zone with the highest density.
-If it is above the density floor, then we set the field values 
-(density, momentum, energy, and temperature) of the
-reset zone to be equal to the field values of this 
-adjacent zone. If no adjacent zone reaches the density floor, then
-the zone is set to the density floor, and given a temperature equal 
-to the temperature floor for our simulations (which is typically 
-$10^{5}\ \text{K}$ for our stellar simulations). We then recompute 
-the thermodynamics to be consistent with these values. The 
-velocity of the zone is set to zero. This latter approach only
+simulation, and the need for this typically decreases as resolution increases.
+If the code still finds itself in a situation where a negative density develops,
+which is possible in certain edge cases especially in adaptive mesh refinement
+simulations with multiple levels, we reset the zone characteristics such that
+the density returns to being above the floor. Our strategy for a reset is
+that we take the average of all fluid quantities in adjacent cells whose
+density is also above the floor, and set the fluid state variables in the
+reset zone to match that average. If no adjacent zone reaches the density
+floor, then the zone is set to the density floor, and given a temperature
+equal to the temperature floor for our simulations (which is typically 
+$10^{5}\ \text{K}$ for mergers and $10^{7}\ \text{K}$ for collisions).
+We then recompute the thermodynamics to be consistent with these values.
+The velocity of the zone is set to zero. This latter approach only
 occurs in very rare situations, and is there as a last resort.
 
 \castro's approach to adaptive mesh refinement, based on its underlying
@@ -673,9 +718,9 @@ below it. We typically call the level 0 grid the \textit{coarse} grid,
 which has the lowest spatial resolution. Each finer, higher-level grid
 has a higher resolution than the grid below it by some integer factor
 $N$, which is restricted to be $N = 2\ \text{or}\ 4$ in \castro. The
-zones are strictly contained within the rectangular extent of the
-underlying coarser zones (at present, in 3D the code is restricted to representing
-only Cartesian geometries with uniform spacing in each dimension). For the time
+zones are strictly contained within the logically rectangular extent of the
+underlying coarser zones (this implies that geometrically the area of the
+refined zones is contained in the area of underlying coarse zones). For the time
 evolution of the AMR system we use subcycling, where each AMR level is
 advanced at a different timestep and a correction step is applied at
 the end to synchronize the various levels. The number of
@@ -688,10 +733,10 @@ per level 0 timestep.
 The boundary conditions on the hyperbolic system are simply
 zero-gradient zones that allow material to flow directly out of the
 domain. Using AMR, we make the coarse grid large enough that the
-boundaries are relatively far from the region of interest. This
+boundaries are relatively far from the region of interest, and enforce
+that refined grids cannot reach the domain boundary. This
 ensures that any boundary effects do not pollute the inner region
-where the stars will eventually make contact.  We further make the
-restriction that refined grids cannot reach the domain boundary.
+where the stars will eventually make contact.
 
 \castro\ uses the dual energy formalism of \cite{bryan:1995,ENZO}, where we evolve equations
 for both the total energy $E$ and the internal energy $e$, using one or the other to
@@ -773,13 +818,14 @@ that illustrates how the update is done in the code:
     + \frac{\ell_z^2}{\rho R^3} \label{eq:radial-momentum-rearranged}\\
     \frac{\partial(\ell_z)}{\partial t} &= -\nabla \cdot (\ell_z \mathbf{u}) - \left(\frac{\partial (-py)}{\partial x} + \frac{\partial(px)}{\partial y}\right).\label{eq:angular-momentum-rearranged}
 \end{align}
-The first term is the standard advective flux term for any variable that advects with
-the flow, and the state quantity inside this advective term can be derived on cell edges
-using the primitive hydrodynamic variables after a Riemann solver has been performed.
-The second term on the right-hand-side of \autoref{eq:angular-momentum-rearranged} can be swept up
-into the flux terms in the same way that the pressure term for the linear momenta
-is often added to the fluxes, to make the conservation form explicit. The remainder
-are the last two terms on the right-hand-side of \autoref{eq:radial-momentum-rearranged}.
+The first term on the right-hand-side (RHS) of both equations is the standard advective
+flux term for any conserved variable that advects with the flow, and the state quantity
+inside this advective term can be derived on cell edges using the primitive hydrodynamic
+variables after a Riemann solve has been performed. The second term on the RHS of
+\autoref{eq:angular-momentum-rearranged} can be swept up into the flux terms in the
+same way that the pressure term for the linear momenta is often added to the fluxes,
+to make the conservation form explicit. The remainder are the last two terms on the
+RHS of \autoref{eq:radial-momentum-rearranged}.
 While maintaining second-order accuracy in time, the last term can be treated as a
 cell-centered source term that we deal with using a predictor-corrector
 method (similar to how we implement external forcing like gravity and rotation; see
@@ -790,20 +836,20 @@ because the edge states are too; however, as a drawback, the pressure is unaware
 source terms that are applied in the corrector step after a hydrodynamics update. The
 benefit of this approach is that we do not need to construct a general cell-centered
 gradient of the pressure using cell-centered state data, nor do we need to perform the
-equation of state call that entails.
+equation of state call that this entails.
 
-It is important to observe that in this formulation
-the radial momentum equation is \textit{not} a conserved quantity: it should and
-will in general change with time over the course of the simulation. The above form,
-absent of source terms, makes this clear. The angular momentum term in
-\autoref{eq:angular-momentum} can be thought of physically as expressing the fact
+It is important to observe that in this formulation the radial momentum equation
+is \textit{not} a conserved quantity: it should and will in general change with
+time over the course of the simulation if the system is not in perfect rotational
+equilibrium. The above form, absent of source terms, makes this clear. The angular momentum term in
+\autoref{eq:radial-momentum} can be thought of physically as expressing the fact
 that a particle with some initial angular momentum will have its radial momentum
 increase with time as it moves away from the origin, and can be thought of geometrically
 as expressing the curved nature of the underlying coordinates for the radial momentum
-\citep{motl:2002}. Note that while the version in \autoref{eq:radial-momentum-rearranged}
-is more convenient for our hydrodynamics methodology, the pressure-gradient terms
-in the first version are the ones appropriate for a radial field and so no physical meaning
-should be ascribed to the pressure term at the end of \autoref{eq:radial-momentum-rearranged}.
+\citep{motl:2002}. It is only the presence of a source term like gravity that can keep
+such a particle on an orbit at its original radius, and for such a case it may be helpful
+to think of the angular momentum source term as an outward centrifugal force that
+balances against the inward centripetal force provided by gravity.
 
 In the absence of source terms, the angular momentum \textit{is} conserved
 to machine precision (ignoring the effects of physical domain boundaries). In the
@@ -852,10 +898,7 @@ effect that does not change the core angular momentum conservation property. An
 analysis of the different mechanisms for implementing this update may be an interesting
 avenue for future research --- including various aspects like how to implement the
 source terms in the radial momentum equation. Of course, the answer will likely
-be problem-dependent. Indeed, we already face this situation in general with the
-gravitational and rotational source terms, even independent of the hybrid momentum
-discussion --- the velocity field seen by the new-time rotation source terms depends
-on whether we apply the gravitational force before or after the rotation force.
+be problem-dependent.
 
 
 
@@ -868,10 +911,15 @@ arbitrary relativity and degeneracy over a wide range of temperatures
 and densities. Thermodynamic quantities are calculated as derivatives
 of the Helmholtz free energy, and the values are interpolated from a
 table. Approximate contributions from the radiation pressure
-of a blackbody and Coulomb corrections from the ions are added (note that
-many authors disable these Coulomb corrections in their local versions
-of the software, and it is not always reported in the literature when
-the Coulomb corrections are or are not used).
+of a blackbody and Coulomb corrections from the ions are
+added\footnote{Many authors disable these Coulomb corrections in
+their local versions of the software, and it is not always reported
+in the literature when the Coulomb corrections are or are not used. The
+Coulomb corrections can sometimes be challenging because, at present, they
+are implemented with a hard cut-off at low temperature and energy that
+can introduce problems. In the future we plan to look at approaches that
+use a smooth form for the Coulomb corrections over the entire $T$ and $\rho$
+plane.} to the electron-positron contribution.
 The natural variables of the Helmholtz free energy are
 temperature and density, and calling the EOS is simplest in this
 form. In hydrodynamics we often have the density and
@@ -880,15 +928,16 @@ temperature, pressure, and other quantities. To do this, we employ a
 Newton-Raphson iteration over the temperature (given some sufficient
 starting guess) until we find the temperature that corresponds to the
 desired internal energy. Sometimes this process fails to converge and
-the iterative value approaches zero. In these cases we employ a
-``floor'' that limits how low the temperature can go (typically 
-$10^5$ K). There is a choice here how to proceed: we can either
+the iterative value approaches zero. In these cases we enforce a
+``floor'' that limits how low the temperature can go, which has the same
+value as it does for the hydrodynamics (typically $10^5$ to $10^7$ K).
+There is a choice here how to proceed: we can either
 assign this floor value to the temperature and let that zone be
 thermodynamically inconsistent (the original behavior in \castro), or
 we can adjust the internal energy to be thermodynamically consistent
 with the temperature, at the cost of violating energy conservation. We
-have found in some test problems of strong one-dimensional shocks that reach 
-the temperature floor that the latter yields more accurate results. 
+have found in some test problems of strong one-dimensional shocks \citep{zingalekatz:2015}
+that reach the temperature floor that the latter yields more accurate results. 
 However, allowing the equation of state call to update the 
 internal energy can actually result in significant changes to the 
 total energy of the system over long periods of time, 
@@ -909,11 +958,12 @@ We solve the Poisson equation for self-gravity for our problem,
 \begin{equation}
   \nabla^2 \Phi(\mathbf{x}) = 4\pi G\, \rho(\mathbf{x}),
 \end{equation}
-where $\Phi$ is the gravitational potential, $G$ is the gravitational
-constant, and $\rho$ is the mass density.\footnote{In the \castro\ code, the 
+where $\Phi$ is the gravitational potential\footnote{In the \castro\ code, the 
 right-hand side is negated and therefore $\Phi$ is positive. We use the 
 sign convention that is typical for astrophysics in this dissertation. 
-When $\Phi$ appears in the code it is negated to compensate for this.} 
+When $\Phi$ appears in code we have written that uses \castro\
+it is negated to compensate for this.},
+$G$ is the gravitational constant, and $\rho$ is the mass density.
 The solution of this equation in \castro\ is described in \cite{castro}, and
 consists of both level and composite solves, and (optionally) a final
 synchronization at the end. We do not enable this final synchronization
@@ -935,21 +985,33 @@ and for the energy source term it is
   \left.\frac{\partial (\rho E)}{\partial t}\right|_{\text{grav}} = \frac{1}{\Delta V} \int \rho \mathbf{u}\cdot\mathbf{g}\, dV \label{eq:cell_center_gravity_source}.
 \end{equation}
 Here $\Delta V$ is the cell's volume.
-In most hydrodynamics codes these are discretized as $\rho\,
-\mathbf{g}$ and $\rho\, \mathbf{u}\,\cdot\mathbf{g}$, respectively, 
+In most hydrodynamics codes these are discretized as ($\rho\,
+\mathbf{g}$) and ($\rho\, \mathbf{u}\,\cdot\mathbf{g}$), respectively, 
 where $\rho$, $\mathbf{u}$, and $\mathbf{g}$ 
 are evaluated at the zone center. 
 
-There are two ways that these source terms enter the system evolution. 
-First, during the hydrodynamics update, we alter the edge states that enter
+These source terms enter the system evolution in two places: as source terms themselves
+that directly update the state, and as contributions to the calculation of the hydrodynamics update.
+During the hydrodynamics update, we alter the edge states that enter
 into the determination of the fluxes. (This only applies for the momentum source term;
 the gravitational force does not directly do work on the internal energy, which is used 
-to infer the pressure.) To second order in space and time, 
-this can be done using the cell-centered
-source term evaluated at time-level $n$. We choose a more accurate approach, 
-which is also second order, of characteristic tracing
-under the source term; the details of this are described in Appendix A of \cite{wdmergerI}.
-Second, after the hydrodynamics step, we add the time-centered source terms
+to infer the pressure.) To second order in space and time, this can be
+done using the cell-centered source term evaluated at time-level $n$, by directly
+applying the value of the force to the relevant primitive variables over a
+time interval of $\Delta t / 2$. We refine this approach in two ways which maintain
+the second order convergence property of the approach but are more accurate. First,
+we perform characteristic tracing under the source term\footnote{In practice in the code,
+we add all relevant source terms, not just gravity, together for each primitive variable and
+\textit{then} perform the characteristic tracing on this overall source.} in the prediction.
+Characteristic tracing involves including components of the primitive equations used to predict
+an edge state only if the velocity of those components is moving toward the relevant interface,
+and is used for the hydrodynamic components in the primitive equations as well.
+The details of this are described in Appendix A of \cite{wdmergerI}. Second, instead of using
+the time-level $n$ value of the source term, we predict it to time-level $n+1/2$ using a lagged
+linear predictor that estimates the current time derivative of the source term by using a
+finite difference over the last timestep.
+
+After the hydrodynamics step, we add the time-centered source terms
 to the state. First we describe how we do this for the momentum,
 and then we describe our approach for the energy. This discussion is somewhat detailed.
 We believe that the attention is necessary because of the importance of accuracy
@@ -983,10 +1045,10 @@ The catch is that if the potential if non-zero outside of the domain, then there
 momentum lost or gained from the grid, which will be encapsulated in the ghost cells
 just outside the domain. In addition, when we replace the Laplacian above by the full
 three-dimensional stencil including the $y$ and $z$ derivatives, depending on the
-discretization these may not be cancelled at all. This latter problem can be resolved by
-writing the momentum update in an explicitly conservative way.
+discretization these may not be cancelled at all.
 
-\citet[Chapter 4]{shu:1992} observes that it is possible to describe the source term 
+This last problem can be resolved by writing the momentum update in an explicitly
+conservative way. \citet[Chapter 4]{shu:1992} observes that it is possible to describe the source term 
 for the momentum equation by taking the divergence of a gravitational stress tensor,
 \begin{equation}
   G_{ij} = -\frac{1}{4\pi G}\left(g_i g_j - \frac{1}{2}|\mathbf{g}|^2\delta_{ij}\right).
@@ -994,8 +1056,8 @@ for the momentum equation by taking the divergence of a gravitational stress ten
 The momentum equations are then written explicitly in conservative form.
 The flux at any zone boundary is added to one cell and
 subtracted from another, so that the total momentum in the domain interior stays constant to
-within numerical roundoff error. This result can be derived by analytically recasting 
-\autoref{eq:momentum_discretization}. In the continuum limit, the two momentum
+within numerical roundoff error. This result can be derived by analytically recasting the
+multi-dimensional version of \autoref{eq:momentum_discretization}. In the continuum limit, the two momentum
 formulations are identical. Thus the latter has been advocated by, for example, 
 \cite{jiang:2013} for the ATHENA code. A significant limitation to this approach is that in a finite discretization 
 the divergence of the gravitational acceleration is no longer guaranteed to equal
@@ -1034,7 +1096,7 @@ Conservation of total energy requires that a change in gravitational energy is c
 for by a change in gas energy, and that energy changes due to mass transfer are explicitly and 
 exactly tracked. Suppose that we have some fluid mass $\Delta M_{i+1/2} = \Delta \rho_{i+1/2} \Delta V$ leave the zone
 with index $i$ and enter the zone with index $i+1$. The subscript indicates that the mass change is
-occurring at the interface between the two zones, at index $i+1/2$. The work done by the gravitational
+occurring at the interface between the two zones, at index $i+1/2$. The work $W$ done by the gravitational
 force on the gas is $\Delta (\rho E) = W = \int F dx = (\Delta M_{i+1/2}\ g_{i+1/2}) (\Delta x / 2)$,
 where $g_{i+1/2}$ is the gravitational acceleration at the interface. The second term in parentheses
 is just the distance from the zone center to the zone edge: once the mass leaves the zone edge, it no longer
@@ -1179,7 +1241,7 @@ $P_l$ and $P_l^m$, respectively, over the computational domain; their definition
 
 This approach becomes computationally feasible when we cut off the
 outer summation in \autoref{eq:multipole_potential} at some finite
-value of $l_{\text{max}}$. If it is of sufficiently high order, we
+value of $l$ that we define $l_{\text{max}}$. If it is of sufficiently high order, we
 will accurately capture the distribution of mass on the grid. In
 practice we first evaluate the discretized analog of the modified
 multipole moments for $0 \leq l \leq l_{\text{max}}$ and $1 \leq m
@@ -1191,8 +1253,8 @@ required to calculate the boundary conditions is directly related
 to the chosen value of $l_{\text{max}}$, so there is a trade-off
 between computational expense and accuracy of the result.
 
-As a demonstration of the method's accuracy, we consider the case of two 
-white dwarfs of mass ratio 2/3, using the initialization procedure described below 
+As a demonstration of the method's accuracy, we consider the case of a binary white dwarf
+system of mass ratio 2/3, using the initialization procedure described below 
 in \autoref{sec:software}. We terminated the simulation just after
 initialization, so that we perform only an initial Poisson solve for this 
 density distribution. We did this for values of $l_{\text{max}}$ ranging
@@ -1323,7 +1385,7 @@ where $x_0 = R + x$, $x_1 = R - x$, $y_0 = R + y$,
 $y_1 = R - y$, $z_0 = R + z$, $z_1 = R - z$, 
 and $r_{ijk} = \sqrt{x_i^2 + y_j^2 + z_k^2}$. We note that if implemented in 
 \texttt{Fortran} or \texttt{C}/\texttt{C++}, the inverse hyperbolic tangent used here is
-\texttt{atanh} and the inverse tangent is \texttt{atan} (\textit{not}
+\texttt{atanh} and the inverse tangent is \texttt{atan} (\textit{not} the more common
 \texttt{atan2}). This formula is valid both inside and outside the
 cube. The normalized $L^2$ error for this problem is also shown
 in \autoref{fig:gravity_convergence}, and only for this problem 
@@ -1348,30 +1410,21 @@ For the evolution of binary systems, it is most natural to evolve the
 two stars in a frame that is co-rotating at the same period as the
 orbital period. Since the publication of the original code paper, \castro\ 
 now has the ability to evolve systems in a rotating reference frame. 
-Source terms corresponding to the Coriolis and centrifugal 
-force terms are added to the momentum and energy equations. In this frame, 
-the stars essentially remain stationary in their original positions due to the
+Source terms corresponding to the Coriolis and centrifugal force terms
+are added to the momentum and energy equations. In this frame, the stars
+essentially remain stationary in their original positions due to the
 centrifugal force supporting against the gravitational attraction, and
-will remain this way as long as significant mass transfer does not
-occur. \cite{swc:2000} demonstrated (in the context of neutron star
-mergers) that conservation of angular momentum is much easier to
-obtain in the rotating reference frame than in an inertial frame in
-which stars advect large amounts of material around the domain. We
-wish to emphasize that although it is commonly stated in the
-literature that fixed-mesh codes poorly conserve angular momentum,
-it is only generally true that mesh-based codes do not exactly conserve 
-angular momentum when the equations are written in conservative form
-for linear momentum. Indeed, \cite{motl:2002} and \cite{byerly:2014} 
-have evolved binary systems using the hydrodynamics equations written 
-in a form that explicitly conserves angular momentum, and it is 
-straightforward to convert an existing grid-based code to solve 
-the system of equations that \citeauthor{byerly:2014} present.
-Additionally, the extent to which angular momentum conservation is violated in our code
-is a function of the resolution. When the resolution is sufficiently high, 
-excellent conservation properties can result. At reasonable resolution 
-for a binary orbit our code conserves angular momentum well enough 
-to keep the stars stable for a large number of orbits; however, at moderate 
-resolution in an inertial frame, there is a secular loss of angular 
+will remain this way until significant mass transfer occurs. \cite{swc:2000}
+demonstrated (in the context of neutron star mergers) that conservation of
+angular momentum is much easier to obtain in the rotating reference frame
+than in an inertial frame in which stars advect large amounts of material
+around the domain. So the use of a rotating reference frame is similar in
+motivation to the use of the hybrid advection equations of \autoref{sec:hybrid_advection}.
+As the extent to which angular momentum conservation is violated in our code
+is a function of the resolution, when the resolution is sufficiently high, 
+excellent conservation properties can result, lessening the need for
+approaches such as the rotating frame or the hybrid equations. Nevertheless,
+at moderate resolution in an inertial frame, there is a secular loss of angular 
 momentum that eventually will result in a spurious merger.
 We note that as the stars begin to coalesce, the rotating reference frame
 will no longer provide a good approximation to the spatial motion of
@@ -1380,12 +1433,19 @@ domain. This is not necessarily problematic because the most important
 feature of the rotating frame is that it helps ensure that the initial
 coalescence is not the result of spurious numerical loss of angular
 momentum. When significant mass transfer sets in and evolution
-proceeds on a dynamical timescale, the conservation properties may be
-slightly worse but angular momentum conservation is also less
-important.
+proceeds on a dynamical timescale, the rotating frame may no longer be the
+best choice, but should still yield quite reasonable results. In passing,
+we note that for this reason, some groups (e.g. \citet{pakmor:2012:gadget})
+have opted to perform the early evolution in the rotating frame and then
+transform to the inertial frame once mass transfer sets in; we do not
+adopt this approach in the current work, but may experiment with it in
+the future.
 
 In a rotating reference frame with angular frequency vector $\bm{\omega}$,
-the non-inertial contribution to the momentum equation is:
+the non-inertial contribution to the momentum equation is\footnote{In general there
+also a term corresponding to the time rate of change of the rotational frequency,
+$\dot{\bm{\omega}}$; we have implemented the ability to use a time-changing
+rotational frequency in \castro\ but do not discuss it in this dissertation.}:
 \begin{equation}
   \left.\frac{\partial(\rho \mathbf{u})}{\partial t}\right|_{\text{rot}} = -2\, {\bm\omega} \times (\rho\mathbf{u}) - \rho {\bm\omega} \times \left({\bm\omega} \times \mathbf{r}\right).
 \end{equation}
@@ -1454,18 +1514,16 @@ time-level $n$ and time-level $n+1$. If we update the latter with the gravitatio
 then the Coriolis force sees a different velocity than the one obtained through the 
 pure hydrodynamics step. (The energy equation does not face the same issue in our new formulation,
 because the velocities used are always the time-level $n+1/2$ values coming from the Riemann solver.)
-In practice, this does not matter significantly for our simulations in this work 
-because the centrifugal force plays the dominant role in maintaining stability of non-contact 
-binary systems, and the centrifugal force does not depend on the fluid velocity.
-This issue may be worth exploring in future work in situations where the Coriolis 
-term is non-negligible in determining the system evolution.
+This likely does not matter significantly for our simulations in this work because it is
+a high order effect, but this issue may be worth exploring in future work.
 
-In all simulations performed in a rotating reference frame, we transform all relevant
+In simulations performed in a rotating reference frame, we transform all relevant
 quantities back to the inertial reference frame when reporting them in analysis routines 
-and visualization (though the data is saved to plotfiles while still in the rotating frame). In particular,
-for every zone we adjust the position, momentum, and energy to account for rotation.
-If the position is $\mathbf{x}$ in the inertial frame and $\mathbf{x}^\prime$ in 
-the rotating frame, and the rotation vector is $\bm{\omega}$, the transformation rules are:
+and visualization (except for \autoref{sec:mergers}), though the data is saved to plotfiles
+while still in the rotating frame. In particular, for every zone we adjust the position,
+momentum, and energy to account for rotation. If the position is $\mathbf{x}$ in the inertial
+frame and $\mathbf{x}^\prime$ in the rotating frame, and the rotation vector is $\bm{\omega}$,
+the transformation rules are:
 \begin{align}  
   \mathbf{x}(t) &= \mathbf{R}\mathbf{x}^\prime(t) \\
   \mathbf{v}(t) &= \mathbf{v}^\prime(t) + \bm{\omega} \times \left(\mathbf{R} \mathbf{x}^\prime(t)\right)
@@ -1482,8 +1540,13 @@ the $x$, $y$, and $z$ axes, and $\bm{\theta} = \bm{\omega} t$.
 \subsection{Nuclear Network}
 \label{sec:network}
 
+\subsubsection{Nuclear Isotopes}
+\label{sec:isotopes}
+
 White dwarfs are mainly composed of $\alpha$-chain particles, primarily ${}^4$He,
-${}^{12}$C, ${}^{16}$O, ${}^{20}$Ne, and ${}^{24}$ Mg. Therefore the core of
+${}^{12}$C, ${}^{16}$O, ${}^{20}$Ne, and ${}^{24}$ Mg, where the $\alpha$ particle
+is a ${}^4$He nucleus and the $\alpha$ chain is the series of isotopes obtained by
+successive captures of an $\alpha$ particle. Therefore the core of
 any network appropriate for modeling nuclear burning in white dwarfs will be
 these alpha chain nuclides, with the idea being that links up the $\alpha$-chain
 will eventually get us to ${}^{56}$Ni, the nuclide responsible for the
@@ -1499,13 +1562,15 @@ was used by \citet{rosswog:2009} for their collision calculations in SPH.
 Next is \aproxthirteen\ \citep{timmes:1999,timmes:2000}. This includes
 all of the isotopes of \isoseven, and all of the $\alpha$-chain particles between
 silicon and nickel (${}^{32}$S, ${}^{36}$Ar, ${}^{40}$Ca, ${}^{44}$Ti, ${}^{48}$Cr,
-and ${}^{52}$Fe). This network was used by \citet{hawley:2012} and \citet{raskin:2010}.
-\citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a very similar network
-that included additionally ${}^{60}$Zn. The \aproxnineteen\ network \citep{timmes:1999}
-builds on \aproxthirteen\ by including isotopes for hydrogen burning and explicit
-tracking of photodisintegration into ${}^{54}$Fe. This network was used by
-\citet{kushnir:2013}, \citet{kushnir:2014}, \citet{rosswog:2009} for their
-calculations with \flash\ (a commonly used compressible hydrodynamics code
+and ${}^{52}$Fe). This network was used in collisions by \citet{hawley:2012} and
+\citet{raskin:2010}; \citet{loren-aguilar:2010} and \citet{garcia-senz:2013} used a
+very similar network that included additionally ${}^{60}$Zn. It has also been used in mergers
+by \citet{raskin:2012,raskin:2014}. \aproxthirteen is the default network used by our
+software and is used in the simulations below unless otherwise stated. The \aproxnineteen\
+network \citep{timmes:1999} builds on \aproxthirteen\ by including isotopes for
+hydrogen burning and explicit tracking of photodisintegration into ${}^{54}$Fe.
+This network was used by \citet{kushnir:2013}, \citet{kushnir:2014}, and \citet{rosswog:2009}
+for their collision calculations with \flash\ (a commonly used compressible hydrodynamics code
 in the astrophysics literature), and \citet{papish:2015}. Finally we will also
 consider \aproxtwentyone, which includes all of the above plus ${}^{56}$Cr
 and ${}^{56}$Fe and related reaction links. The primary virtue of using
@@ -1514,14 +1579,15 @@ $Y_e = 0.5$.
 
 All four of these networks have been ported into a form that is consistent
 with the \boxlib\ codes, in the freely available \microphysics\ code
-repository\footnote{\microphysics\ can be obtained at \url{https://github.com/BoxLib-Codes/Microphysics}.},
+repository\footnote{\microphysics\ can be obtained at \url{https://github.com/BoxLib-Codes/Microphysics},
+and is also where we store our version of the Helmholtz equation of state.},
 a collection of microphysical routines that are designed to be used in our
 hydrodynamics codes. These can be easily swapped at compile time by using the 
 appropriate makefile variable.
 
 
 
-\subsection{Nuclear Burning}
+\subsubsection{Nuclear Burning}
 \label{sec:burning}
 
 Given a set of nuclides and the reaction links between them, we now consider
@@ -1534,17 +1600,19 @@ $T$ is the temperature. The equation describing its evolution is given by
   \frac{d\bm{Y}}{dt} = f(\mathbf{Y}),
 \end{equation}
 where the components of the right-hand-side for the species come from the particular
-nuclear burning network we are using. The energy release $e$ of the zone's burn
+nuclear burning network we are using. The energy $e$ of the zone
 will change when the nuclear abundances evolve, according to
 \begin{equation}
   \frac{\partial e}{\partial t} = N_A \sum_{n} \frac{\partial Y_{n}}{\partial t} m_{n} c^2,
 \end{equation}
 where $c$ is the speed of light and $m_n$ is the mass of each nuclide.
 
-In a hydrostatic burn, we keep $\rho$ and $T$ fixed throughout, and use
+We define several burning modes that determine how $T$ and $e$ are evolved
+during a nuclear burn. In a hydrostatic burn, which we call burning mode 0,
+we keep $\rho$ and $T$ fixed throughout, and use
 the energy released at the end to compute a final temperature that is
 thermodynamically consistent with the new internal energy. By contrast,
-in a self-heating burn, we allow the temperature to evolve in response
+in a self-heating burn (mode 1), we allow the temperature to evolve in response
 to the burning (see\footnote{In the cited paper, a term based on the
 thermodynamic chemical potential was included; we now believe
 that it is incorrect to include such a term in the burn, since it
@@ -1553,39 +1621,40 @@ automatically sums to zero analytically.} \citet{maestro3}):
   \frac{dT}{dt} = \frac{1}{c_V}\frac{\partial e}{\partial t}
 \end{equation}
 (Although $T$ evolves during the burn so that the integration is physically
-accurate, as for the hydrostatic method we discard the final value
+accurate, as in the hydrostatic method we discard the final value
 for $T$ at the end of the burn and recompute a temperature for the zone that is
 consistent with its new internal energy.) Here $c_V$ is the specific heat at
 constant volume, which is provided by the equation of state.  During this burn,
 we can keep $c_V$ constant using its initial value, or at each step we
 can choose to re-evaluate the equation of state using the latest value of $(\rho, T)$.
 The latter is more expensive but also more accurate, and we use it in this dissertation.
-In practice we find that the cost is negligible in comparison to the more expensive
+In practice we find that the cost is small in comparison to the more expensive
 parts of the calculation, and it can significantly speed up convergence near NSE.
-A third option presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
+A third option (mode 2) presented by \citet{raskin:2010} is a so-called ``hybrid'' mode.
 In this mode, by default we do a hydrostatic burn. If that burn fails, or if the net
 energy change is negative, we do the burn again in self-heating mode. A final option
 is a burn that limits the changes due to a burn to avoid numerically unstable burning.
 This mode is discussed in \autoref{sec:unstable_burning} and we will call it a
-``suppressed'' burn for the remainder of this work. All four options
+``suppressed'' burn (mode 3) for the remainder of this work. All four options
 are implemented in our burner software. The simulations shown in this work all
 use the self-heating mode unless otherwise specified.
 
-In our \microphysics\ repository we provide several software options for
-solving a set of coupled stiff ODEs. For this work we use an implementation of
-the well known variable-order Richardson extrapolation method presented by Stoer and
-Bulirsch \cite{stoer:1980}, that is similar to the integrator which ships with
-the original versions of the networks mentioned above. Previous work using the \boxlib\
-codes typically used the classic \vode\ integrator \cite{vode}. We do maintain a version
-of the software that is compatible with our software interfaces in the \microphysics\
-repository, but we have largely shifted to integrators which are written in modern
-Fortran as a consequence of our efforts to run our codes on GPUs. The Stoer and Bulirsch
-integrator we provide satisfies this criterion; we also provide a rewrite of the VODE
-BDF algorithm that uses modern Fortran features. The Stoer and Bulirsch algorithm
-relies on a uniform relative error tolerance for all of the ODEs in the system, which
-we set at $10^{-6}$ for all simulations described here.
+In our \microphysics\ repository we provide several software options for solving a set
+of coupled stiff ODEs. For this work we use an implementation of the well known variable-order
+Richardson extrapolation method presented by \citet{stoer:1980}, that is similar to the
+integrator which ships with the original versions of the networks mentioned above.
+Previous work using the \boxlib\ codes typically used the \vode\ integrator \citep{vode}.
+We do maintain a version of the software that is compatible with our software interfaces
+in the \microphysics\ repository, but we have largely shifted to integrators which are
+written in modern Fortran as a consequence of our efforts to run our codes on GPUs.
+The Stoer and Bulirsch integrator we provide satisfies this criterion; we also provide
+a rewrite of the VODE BDF algorithm that uses modern Fortran features. The Stoer and
+Bulirsch algorithm relies on a uniform relative error tolerance for all of the ODEs
+in the system, which we set at $10^{-6}$ for all simulations described here.
 
-\subsubsection{Coupling to Hydrodynamics}
+
+
+\subsubsection{Coupling Burning to Hydrodynamics}
 \label{sec:burnerhydrocoupling}
 
 In \castro, the reactions are coupled to the hydrodynamics using Strang splitting.
@@ -1616,10 +1685,10 @@ in the current timestep, under the assumption that $\dot{e}$ does not change fro
 timestep to timestep. Similarly, given an estimate for $\dot{X_k}$, the factor $f_{X}$ 
 determines the maximum change in the mass fraction of any species. By making 
 $f_{e}$ and $f_{X}$ smaller, we can control the magnitude of the decoupling 
-between the reactions and the hydro. We choose by default $f_{X} = f_{e} = 0.1$, 
-a choice which is slightly smaller than others in the literature. (Note that previous 
-collision papers we are aware of only limited based on changes in internal energy, 
-not on cahnges in species.)  The sensitivity of results to this choice will be discussed in 
+between the reactions and the hydro. A typical choice for $f_e$ parameter in the
+literature is in the range of 0.2 or 0.3, while to our knowledge a limiter based on
+$f_X$ has not been used by others performing these types of calculations. The sensitivity
+of results to the value of these timestep limiters will be discussed in
 \autoref{sec:collision_parameters:timestepping}. The factors $f_{e}$ and $f_{X}$ can be set at runtime in \castro.
 
 At the start of each advance, we limit the size of the timestep to be the smaller
@@ -1674,20 +1743,24 @@ timestep limiter of mode 1 may actually substantially overestimate
 the needed timestep. The other modes will see that the energy/species  
 substantially changed over the last timestep, but will still 
 overestimate the needed timestep because the burning was quiescent
-for at least some portion of the last advance. In particular, our 
-experience has shown that using only the energy change criterion
-is particularly susceptible to this phenomenon; silicon-group 
-material can build up without changing the internal energy by a 
-large fraction, so the timestep limiter is never triggered, and 
-then in a single step a substantial amount of iron-group elements 
-can be be generated. This can have non-trivial effects on the 
-total amount of iron-group elements generated over the course of
+for at least some portion of the last advance. Our experience has
+shown that none of these methods is flawless, and that limiting
+based on only changes in internal energy is particularly susceptible
+to this staggered burning phenomenon; silicon-group material can
+build up without changing the internal energy by a  large fraction,
+so the timestep limiter is never triggered, and then in a single step
+a substantial amount of iron-group elements can be be generated,
+perhaps forming a detonation. This can have non-trivial effects
+on the total amount of iron-group elements generated over the course of
 the simulation. We have found that the addition of the 
-limiter based on changes in species functionally precludes this.
+limiter based on changes in species functionally precludes this, and
+so the two methods can complement each other.
 
 With the timestep limited the way we advocate in this dissertation, 
 the timesteps are generally short enough so that the errors 
-due to splitting are small. Other approaches to the coupling 
+due to splitting are small. (Note that the timestep limiting is
+most crucial at low resolution; higher resolution automatically demands
+shorter timesteps due to the CFL criterion.) Other approaches to the coupling 
 between reactions and hydrodynamics have been proposed in the 
 broader literature, especially iterative methods such as 
 deferred corrections that allow each of these operators to 
@@ -1695,10 +1768,12 @@ feel the lagged effects of the other operators. For example,
 in the context of low Mach number flows, \cite{nonaka:2012} have
 used the method of spectral deferred corrections \citep{SDC} to
 couple their advection-diffusion-reaction equation set. In our
-context this would involve using the advection as a source term
-for the burning network, and symmetrically including a source
-term to the hydrodynamics corresponding to the energy release
-from the burning. We are presently investigating such a method,
+context this would involve treating the full evolution equation
+for each of the state variables as an ODE with a directly coupled
+burning source term integrated at high order; the advective
+flux is evaluated at the standard second order accuracy
+and is included as an ODE source term.
+We are presently investigating such a method,
 and it may form the basis of further work on this subject.
 
 Now we return to a point we hinted at above. The timestep
@@ -1731,9 +1806,9 @@ to the total energy. Indeed, for the cosmological purpose for which
 this was originally developed, \cite{ENZO} choose a value $\eta_2 = 0.1$
 so that $e$ is only updated to be equal to $E - \mathbf{v}^2/2$ if
 $e > \eta_2\, E$. In other cases the evolved value of the internal
-energy variable is preserved. However, this choice does not work
+energy variable is preserved. However, this choice is somewhat unsafe
 for our application, because the ultimate cause of the nuclear
-burning in a white dwarf collision is the rapid conversion of
+burning in a white dwarf merger or collision is the rapid conversion of
 kinetic energy from the white dwarf bulk motion to thermal energy
 as the white dwarfs slam into each other. Keeping $\eta_2$ large
 prevents this from happening, and consequently the temperature
@@ -1751,7 +1826,7 @@ the value that was used by \cite{hawley:2012}.
 not the only way for the numerical discretization to cause 
 severe errors in the burning. Another failure mode is when
 the energy injection timescale
-$t_e$ is shorter than the sound-crossing time $t_s$ in a zone.
+$\tau_e$ is shorter than the sound-crossing time $\tau_s$ in a zone.
 When the sound-crossing time is too long, energy is built up in
 a zone faster than it can be advected away by pressure waves.
 This is obviously a problem inherent to numerically discretized
@@ -1761,9 +1836,9 @@ temperature building up too quickly in the zone; the detonation
 is spurious in this case and should be avoided if possible.
 The goal is to ensure that the following condition holds:
 \begin{equation}
-  t_s \leq f_{s} t_e \label{eq:burning_limiter_2}
+  \tau_s \leq f_{s}\, \tau_e \label{eq:burning_limiter_2}
 \end{equation}
-The sound crossing time, $t_s$, is given by $\Delta x / c_s$, 
+The sound crossing time, $\tau_s$, is given by $\Delta x / c_s$, 
 where $c_s$ is the sound speed and $\Delta x$ is the (minimum) 
 zone width. The parameter $f_{s}$ then determines the minimum
 ratio of the nuclear energy generation timescale to the 
@@ -1781,10 +1856,10 @@ right-hand-side vector in the integration by a constant factor $F$
 for all variables, where $F$ is the multiplicative factor needed to
 be applied to $\dot{e}$ such that the equality in \autoref{eq:burning_limiter_2}
 holds. (If the inequality is already satisfied, then the integration
-vector is not modified.) We fix $t_s$ to be the value of the sound
+vector is not modified.) We fix $\tau_s$ to be the value of the sound
 crossing time at the beginning of the burn (that is, we do not
 update it as the sound speed changes) and we fix the energy $e$
-that goes into the estimate for $t_e$ to be the value of the
+that goes into the estimate for $\tau_e$ to be the value of the
 internal energy of the zone at the beginning of the burn. If
 instead one allowed $c_s$ and $e$ to evolve with the burn, one
 would obtain a less conservative limiter in the case of explosive
@@ -1800,12 +1875,12 @@ many more timesteps to complete a burn than in self-heating mode.
 
 Regardless of whether the suppressed burning mode works for this
 particular problem, it is not physical, so we include for
-consideration a different approach. If we insist that we cannot
+consideration a different approach. If we insist that we
 cannot directly control the energy injection timescale, we 
 must find a way to alter the sound-crossing timescale. 
 We can achieve this by adding levels of refinement in 
 regions that do not satisfy \autoref{eq:burning_limiter_2},
-which effectively lowers the $\Delta x$ and thus the
+which effectively lowers $\Delta x$ and thus the
 sound-crossing time. We keep tagging zones for refinement
 based on this criterion until the criterion is satisfied
 on the finest level. Since the concern is regions that 
@@ -1836,13 +1911,14 @@ where a spurious detonation begins in a single timestep on the coarse
 grid, though it will kick in immediately after that timestep
 to resolve the regions where the detonation has occurred.
 A possible remedy to be explored in future work is to add
-refinement pre-emptively in regions where the ratio $t_s / t_e$
+refinement pre-emptively in regions where the ratio $\tau_s / \tau_e$
 approaches $f_{s}$ but does not yet exceed it. Another
 possibility for this case would be to track how many levels
 would have been needed to prevent the numerical detonation,
 based on the stability criterion, and reject the timestep and
 retry it from the starting state using that many levels of refinement.
-The ability to reject a timestep and retry it is functionality that
+As mentioned in \autoref{sec:burnerhydrocoupling}, the ability to
+reject a timestep and retry it is functionality that
 we have recently added to \castro, so we may try this in future work.
 
 
@@ -1974,7 +2050,7 @@ For simulations intended to cause a merger, we want a measure that takes
 into account the likelihood that mass transfer will begin. The traditional
 choice is the Roche radius of the star, which measures the effective gravitational
 sphere of influence for each star. The effective Roche radius $r_L$ is defined as
-the radius of a sphere that would have the same volume as the ``Roche lobe,`` the
+the radius of a sphere that would have the same volume as the Roche lobe, the
 region of space in which material principally belongs to one of the stars. (The surface
 of the region is the isosurface where the effective potential becomes zero, meaning
 that material becomes unbound due to the centrifugal force). It is
@@ -1982,7 +2058,7 @@ an approximation because this region is teardrop-shaped in reality. A common
 expression, which we adopt, for $r_L$ is
 the formula provided by \citet{eggleton:1983}:
 \begin{equation}
-  \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.
+  \frac{r_L}{a} = \frac{0.49 q^{2/3}}{0.6^{2/3} + \text{ln}(1 + q^{1/3})}.\label{eq:roche_radius}
 \end{equation}
 $q \equiv M_S / M_P$ is defined as the mass ratio of the binary system. Since
 we specify the mass ratio, we can use this formula to obtain a binary setup where $a$,
@@ -2018,27 +2094,25 @@ of magnitude smaller than that required by the CFL criterion, and allow
 the timestep to increase by 1\% each timestep so that the timestep reaches 
 its maximum allowed by the velocities on the grid over a span of approximately 
 1000 timesteps. This allows the gas at the surface of the white dwarf
-to come closer to equilibrium without having 
-discontinuous jumps in the density or energy. For all simulations, 
-the maximum timestep is set to be equal to one-half of the CFL limit.
+to come closer to equilibrium without having discontinuous jumps in the
+density or energy. For all simulations, the maximum hydrodynamic timestep
+is set to be equal to one-half of the CFL limit.
 
 The computational domain has a total size of $1.024 \times
 10^{10}\ \text{cm}$ in each spatial dimension, and is centered at the
 origin. Our coarse grid has $256^3$ zones, corresponding to a spatial
-resolution of 400 km. For the present study, we choose a simple
-refinement strategy: on the coarse grid, all zones within twice the Roche radius of each
-star are tagged for refinement.
-The extra buffer from doubling the Roche radius ensures that the sharp density gradients near
+resolution of 400 km. For all mergers in the present study, we choose a simple
+refinement strategy for mergers: on the coarse grid, all zones within
+twice the Roche radius of each star are tagged for refinement. The extra
+buffer from doubling the Roche radius ensures that the sharp density gradients near
 the edge of the star are within the zone of refinement. On higher levels, 
 we tag all zones above a given density threshold (taken to be $1\ \text{g cm}^{-3}$ 
-in this dissertation) that corresponds to the stars themselves. We also ensure
-that the outer part of the domain is never tagged for refinement. In
-the present work we do not tag for refinment based on nuclear burning for mergers.
+in this dissertation) that corresponds to the stars themselves.
 
 Outside of the stars we fill the rest of the domain with a very low density 
 ambient gas because our hydrodynamics model requires the density to be 
 non-zero everywhere. This ambient material can create difficulties for the simulation.
-In addition to the negative densities or energies at the stellar surfaces mentioned earlier, 
+In addition to negative densities or energies that can be created at the stellar surfaces, 
 in the rotating reference frame we observe that standing instabilities can create very 
 large velocities in the ambient fluid that drag down the global timestep by 
 up to an order of magnitude.  To deal with this we employ a ``sponge'' similar 
@@ -2062,7 +2136,9 @@ that the sponge smoothing region extends another 10\% of that distance.
 The resulting profile is displayed in \autoref{fig:sponge}. We set $\Delta
 t_S = 0.01$ s, which is of the same order as the CFL timestep
 for typical problem setups. While the sponge is applied we should avoid imputing any physical 
-meaning to what is happening in the low-density gas far from the stars.
+meaning to what is happening in the low-density gas far from the stars. We use the
+sponge for the verification tests of \autoref{sec:verification} but do not enable it
+for the runs in \autoref{sec:mergers}.
 \begin{figure}
   \centering
   \includegraphics[scale=0.8]{plots/sponge}
@@ -2089,7 +2165,7 @@ in the Helmholtz equation of state. However, the results do not really depend on
 exact initial distance as long as there is enough time for the WDs to distort in
 response to tidal forces as they approach.) Their initial velocity is that of
 two point-masses in free-fall towards each other coming in from infinity, such that
-the contact point is at the origin, and they approach each other on the $x$-axis.
+the contact point is at the origin, and they approach each other along the $x$-axis.
 By default the WDs approach each other head-on, with their respective centers
 lying on the $x$-axis, but we have also added an option
 to have the WDs approach each other at a non-zero impact parameter $b$, where the
@@ -2229,7 +2305,7 @@ gravitational wave detectors but is very well suited for proposed space-based de
 
 We follow the prescription of \citet{blanchet:1990} for computing a gravitational wave 
 signal for our simulation. At distances far from the 
-gravitational wave source, we can consider the leading term in the gravitational 
+gravitational wave source, we need only consider the leading term in the gravitational 
 wave signal:
 \begin{equation}
   h^{TT}_{ij}(t,\mathbf{x}) = \frac{2G}{c^4 r}P_{ijkl}(\mathbf{n}) \ddot{Q}_{kl}(t - r/c).
@@ -2307,7 +2383,7 @@ an opportunity for advection errors to build up, and is only partially mitigated
 evolving the white dwarfs in a co-rotating frame. It is therefore important to be
 aware of the behavior of the code in such circumstances.
 
-So our focus here is on a subset of problems that highlight the special difficulties
+Our focus here is on a subset of problems that highlight the special difficulties
 introduced in merger simulations. These problems couple the hydrodynamics, gravity and
 equation of state modules. We observe that while in most non-trivial
 three-dimensional problems this creates a complexity that makes it
@@ -2482,7 +2558,7 @@ strongly supersonic uniform velocity. (See also \citet{wadsley:2008},
 who used the \flash\ code to simulate a hot bubble subject to mixing 
 by the Kelvin-Helmholtz instability, and also found that the mixing was affected by a 
 uniform bulk velocity.) This contrasted with the results
-of the moving-mesh code AREPO being presented in that study, which
+of the moving-mesh code \arepo\ being presented in that study, which
 demonstrated Galilean invariance even at large bulk velocities. 
 Inability to correctly model the Kelvin-Helmholtz instability would 
 have important consequences for how much we can trust the ability of 
@@ -2520,7 +2596,7 @@ converge with resolution (because the initial perturbation is too sharp
 and seeds numerical noise at the grid resolution level) 
 and so it is not possible to know the correct
 behavior of this problem. As such, we do not know whether the
-small-scale modes found in AREPO are real, and the problem is not
+small-scale modes found in \arepo\ are real, and the problem is not
 useful in formally discriminating between methodologies. They instead
 propose an alternate test with a smoother initial contact. This
 converges to the same solution qualitatively in both the stationary
@@ -2970,7 +3046,7 @@ level of agreement holds in the rotating frame as well.
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.2in,clip]{plots/unequal_gw_rot0}
+  \includegraphics[scale=0.8,trim=0.1in 0.0in 0.1in 0.175in,clip]{plots/unequal_gw_rot0}
   \caption[Gravitational wave strain test]
           {Gravitational wave strain polarizations for the first two orbital periods of an 
            unequal mass system. The curves with markers are the numerical data, while the 
@@ -3046,8 +3122,10 @@ an update includes a loop over all the boxes an MPI task owns. The distribution
 obeys a load-balancing algorithm that attempts to equalize the amount of work 
 done by each processor. \boxlib\ contains a number of strategies for distributing 
 work in this way, and by default uses a space-filling curve approach with a 
-Morton ordering (e.g. \cite{sasidharan:2015,beichl:1998}). By experiment we have found that the most efficient load-balancing 
-strategy for our problem is actually a simple knapsack algorithm. In this approach, 
+Morton ordering (e.g. \cite{sasidharan:2015,beichl:1998}). By experiment we have
+found that the most efficient load-balancing strategy for our problem is often
+actually a simple knapsack algorithm, though this depends on the size and layout of
+the problem. In this approach, 
 the amount of work owned by a processor is proportional to the number of grid cells 
 associated with that processor, and the algorithm attempts to ensure that all 
 processors have a similar number of total grid cells. We demand an efficiency of 0.9,
@@ -3059,15 +3137,21 @@ The size and shape of grid boxes is an important consideration for efficiency.
 Boxes that are very small suffer from a host of problems, including the larger 
 amount of communication required between hydrodynamics solves. Additionally, 
 the multigrid solver is less efficient if the boxes are small because there 
-are fewer available levels for coarsening and performing V-cycles. Conversely, 
-boxes that are too large mean that there isn't enough work to go around when we 
+are fewer available levels for coarsening and performing V-cycles. Furthermore,
+the ratio of the number of ghost zones to physical zones becomes larger for small
+boxes, and is above unity for a $16^3$ box. Conversely, boxes that are too large
+often mean that there isn't enough work to go around when we 
 have a large number of processors. Good performance is the result of a careful 
-balance between these two effects. On the lower end, we require that all boxes 
-be a multiple of 16 zones in each dimension; multigrid efficiency sharply decreases 
-if this factor is any lower. On the upper end, we select the maximum grid size 
+balance between these two effects. For mergers, on the lower end, we require that
+all boxes be a multiple of 16 zones in each dimension; multigrid efficiency sharply
+decreases if this factor is any lower. On the upper end, we select the maximum grid size 
 based on the number of processors we use and the total number of cells in the 
 simulation. This size will therefore in general vary on different AMR levels. 
-Generally we select a value in between 32 and 64 zones per dimension.
+Generally we select a value in between 32 and 64 zones per dimension. For collisions,
+when nuclear burning usually dominates all other effects including the communication cost,
+we allow the minimum box size to become smaller (sometimes as small as 8 zones per
+spatial dimension); we do not need to burn on the ghost zones, as we can replace it with
+a communication step that fills the ghost zones using data from other boxes.
 
 We use OpenMP to accelerate the work associated with the boxes owned
 by each MPI task. Originally \castro\ used OpenMP to accelerate
@@ -3076,7 +3160,7 @@ piecewise-parabolic edge state reconstruction and the conservative
 flux update. However, there is a significant amount of overhead
 associated with generating a new OpenMP region at each of the many
 different loops in a hydrodynamics algorithm. This makes such a
-strategy sub-optimal for use on many-core processors and GPUs. We have
+strategy sub-optimal for use on many-core processors and GPUs. \castro\ has
 recently switched to a tiling approach where an OpenMP region is
 generated at the start of the hydrodynamics routine and the individual
 threads separately work on different partitions of each box \citep{boxlib-tiling}. This
@@ -3149,13 +3233,13 @@ improvement over the results presented in the first \castro\ paper.
            \label{fig:strong_scaling}}
 \end{figure}
 
-The strong scaling test we perform uses a grid setup similar to what we 
+The strong scaling test we performed uses a grid setup similar to what we 
 use for well-resolved binary simulations. With only a uniform coarse grid, 
 there are approximately $2 \times 10^7$ zones. With a single refined level, 
 we have approximately $2 \times 10^8$ zones, typically spread over $\sim 2000$ grids.
 On a second refined level, there are a similar number of zones and grids 
 (the volume covered by this level is smaller, which offsets the greater resolution).
-We run a scaling test for all three cases, with the 
+We ran a scaling test for all three cases, with the 
 highest processor count in each case chosen so that the number of 
 MPI tasks is similar to the number of grids. There are no gains 
 to be achieved from further parallelism. The results are found in 
@@ -3204,6 +3288,8 @@ constant or decreasing by the end of the run. The typical amount of nickel mass 
 for our runs at low resolution is $0.2\ \msolar$, which is significantly lower than
 that obtained by \cite{raskin:2010} and \cite{kushnir:2013} for the same problem.
 We will discuss this in \autoref{sec:collision_resolution}.
+
+
 
 \subsubsection{Timestepping}
 \label{sec:collision_parameters:timestepping}
@@ -3323,7 +3409,11 @@ detonations occur slightly outside the initial contact point, near the edges of 
 establish as the main source of error in simulations that produce too little nickel. However, we find
 that the resulting detonations are not strong enough to convert a significant amount of material to NSE
 conditions; instead, only QSE conditions are reached near the center of the collision, leaving a significant
-amount of silicon and sulfur on the domain that is not further processed.
+amount of silicon and sulfur on the domain that is not further processed. This may be a consequence of
+the low resolution we are using here; see the discussion on the properties of the detonation in
+\autoref{sec:collision_resolution}.
+
+
 
 \subsubsection{Impact Parameter}
 \label{sec:collision_parameters:impactparameter}
@@ -3559,10 +3649,12 @@ they used on our simulation grid, so the detonation looks quite different than i
 
 In this section we turn to results from merger calculations. We focus specifically on
 results from two cases: one where the secondary is just filling its Roche radius ($f_R = 1.0$);
-see \autoref{sec:initial_state:mergers} for a description of the initialization procedure),
 and one where the secondary is already significantly overflowing its Roche radius ($f_R = 0.9$).
-In the former case mass transfer begins slowly and steadily, while in the latter the binary
-orbit quickly decays and the system coalesces.
+See \autoref{sec:initial_state:mergers} for a description of the initialization procedure; $f_R$
+is defined as the ratio of the position of the location of the inner edge of the secondary (relative to
+the origin) to the location where its inner edge would be equal to the location specified by the
+effective Roche radius formula used in \autoref{eq:roche_radius}. In the former case mass transfer
+begins slowly and steadily, while in the latter the binary orbit quickly decays and the system coalesces.
 
 \subsection{Steady Mass Transfer}
 \label{sec:mergers:stable}
@@ -3646,7 +3738,7 @@ that the hybrid advection technique does a much better job at its intended goal 
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.8]{{{plots/merger_angular_momentum_comparison_m_P_0.90_m_S_0.60_n_512}}}
-  \caption[Angular momentum conservation properties for $f_R = 1.0$]
+  \caption[Angular momentum conservation for $f_R = 1.0$]
           {Angular momentum conservation error for the $f_R = 1.0$ merger for the first 100 seconds.
            The vertical axis is the absolute value of the change in the angular momentum relative to
            its initial value.
@@ -3657,7 +3749,7 @@ that the hybrid advection technique does a much better job at its intended goal 
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.8]{{{plots/merger_angular_momentum_comparison_minus_grid_losses_m_P_0.90_m_S_0.60_n_512}}}
-  \caption[Angular momentum conservation properties for $f_R = 1.0$, grid losses subtracted]
+  \caption[Angular momentum conservation for $f_R = 1.0$, grid losses subtracted]
           {Same as \autoref{fig:merger_angular_momentum_comparison}, but losses through the
            domain boundary have been subtracted.
            \label{fig:merger_angular_momentum_comparison_minus_grid_losses}
@@ -3669,14 +3761,12 @@ we see that the angular momentum evolution is nearly identical in the rotating f
 and the hybrid evolution. This is a consequence of the rotation source term having a property that the gravitational
 source term does not. Momentum conservation for the latter is violated only to the extent that the cell-centered
 gravitational acceleration does not exactly satisfy the Poisson equation (see \autoref{eq:momentum_discretization}
-and the surrounding text), which is caused by small errors in the Poisson solve. By contrast, even though the
-centrifugal force is conservative when integrated over the whole domain, even if it is evaluated at zone centers,
-the rotation source term for the momentum will behave differently if the velocities are evaluated at cell centers.
-There will therefore not be (implied) exact cancellation at zone edges as there is for gravity.
+and the surrounding text), which is caused by small errors in the Poisson solve. By contrast, the rotation
+source term as applied here is not numerically conservative, due mainly to the presence of the Coriolis term.
 This could potentially be mollified by changing the way the rotation source term for momentum is applied, but
 that is outside the scope of this work. However, the angular momentum eventually stabilizes (as we confirmed
-by running the simulation a little longer), because the non-conservation effect here depends on the Coriolis
-force, which is proportional to velocity, and which therefore becomes less important as the system reaches
+by running the simulation a little longer), as the non-conservation effect here depends on the Coriolis
+force, which is proportional to velocity and therefore becomes less important as the system reaches
 a quasi-stable equilibrium. This is another application of the observation of \autoref{sec:kepler} that while
 the rotating frame does a reasonable job of keeping the system stable against collapse, the Coriolis force
 can wreak havoc if the system is far from equilibrium in the frame. We note in passing that \citet{byerly:2014}
@@ -3684,13 +3774,10 @@ have advocated a compromise approach where the variables are advected in a rotat
 respect to the inertial frame. This has the nice effect of causing the Coriolis term to drop out of the
 angular momentum equation in the hybrid equation set, so it is a promising avenue for future work.
 
-The final quantity we look at is the mass of the stars over this time period, shown in \ref{fig:steady_mass_transfer}.
-The mass of the secondary declines at a steady secular rate of approximately $2 \times 10^{-5}\ \msolar \text{s}^{-1}.$
+The final quantity we look at is the mass of the stars over this time period, shown in \autoref{fig:steady_mass_transfer}.
+The mass of the secondary declines at a steady secular rate of approximately $2 \times 10^{-5}\ \msolar\ \text{s}^{-1}.$
 This mass loss is modulated by a periodic oscillation of the stars around their quasi-static orbital distance,
-a consequence of not starting the stars exactly in equilibrium; remember that we define the stellar masses
-as an integral over the domain that looks at where material on the domain is with respect to the stellar
-center of mass, so wobbling of the center of mass over time can cause a corresponding wobble in what we
-call the stellar mass without having any meaningful physical implication; it is an accounting issue only.
+a consequence of not starting the stars exactly in equilibrium.
 This mass loss rate is such that if it were maintained linearly, the secondary would disrupt completely in
 approximately 100 orbits. Of course, this estimate is an upper bound, as white dwarfs expand when
 they lose mass, making escape of material through the Roche lobe surface easier, amplifying the mass loss
@@ -3746,15 +3833,15 @@ fully the possible initial conditions for these systems.
 
 Here we briefly consider results for mergers that are immediately unstable to mass transfer.
 Because of the above caveats about the initial conditions, these tests should not be considered
-representative of how the mergers would physically occur, but we include these for completeness.
+representative of how the mergers would physically occur.
 Future work will compare these results against more accurate initial conditions.
 
 \subsubsection{Unequal Mass Merger}
 \label{sec:mergers:unstable:unequal}
 
 To obtain unstable mass transfer on a short simulation timescale, we repeated the test of
-\autoref{sec:mergers:stable}, for a $0.9\ \msolar$ primary and $0.6\ \msolar$ secondary, with the
-change $f_R = 0.9$, so that the stellar centers of mass are 10\% closer to each other. This
+\autoref{sec:mergers:stable}, for a $0.9\ \msolar$ primary and $0.6\ \msolar$ secondary, with
+$f_R = 0.9$, so that the stars are 10\% closer to each other. This
 is a very significant change, as now much of the secondary is overflowing its Roche lobe and
 substantial mass transfer begins immediately; the mass transfer rate reaches
 $10^{-3}\ \msolar\ \text{s}^{-1}$ in under five seconds. We ran the test with an effective
@@ -3762,8 +3849,32 @@ $512^3$ zone, 200 km resolution for the hybrid advection case only, in both the 
 rotating frames. Snapshots of the evolution in both frames are found in
 \autoref{fig:unsteady_mass_transfer_unequal_inertial} and
 \autoref{fig:unsteady_mass_transfer_unequal_rotating}, respectively. The initial
-equivalent Keplerian orbital period for this system is 52 seconds, so the timescale for
+Keplerian orbital period for this system is 52 seconds, so the timescale for
 complete disruption of the secondary is about three orbital periods.
+
+The temperature peaks at around $10^9$ K during this merger, which happens around $t = 135\ \text{s}$
+when the flow of stellar material onto the primary WD's surface is near its height. This occurs
+in material with densities approaching $10^6\ \text{g cm}^{-3}$, so the conditions are clearly ripe
+for significant levels of thermonuclear burning. In followup simulations we will enable reactions
+to see what effect they have. However, two important caveats are worth considering. First, the mass
+transfer phase here is more violent than it would be for different initial conditions, so the
+burning here is not necessarily representative for all cases. Second, the burning in this type of system
+may be susceptible to the same type of burning instability that afflicts the collisions, so any detonation
+obtained at this low resolution should be viewed with significant caution. We can make progress on this
+by adding significant refinement at the impact point, though.
+
+The conservation properties are similar as for the steady mass transfer phase (for the following, the
+data comes from the inertial frame run). At $t = 150$ s, after complete disruption has occurred, the
+magnitude of the total angular momentum on the domain has decreased by about 11\%, but this is mainly
+due to mass leaving the domain as it is flung outward by the tidal tail that develops. When this is
+accounted for, the angular momentum loss due to other sources is about 0.02\% of the initial angular
+momentum. Conservation of linear momentum is not quite as good, but still respectable.
+A good proxy for this is to look at where the system center of mass is. At $t = 150$ s,
+$x_{\text{COM}} = 4.6 \times 10^7\ \text{cm}$ and $y_{\text{COM}} = 9.8 \times 10^7\ \text{cm}$. Recall that
+the effective resolution is 200 km, so this is equivalent to the system center moving a few zones away
+from the center over the course of the evolution. The center of mass usually stays a little better
+localized in the case where we evolve the linear momentum equations. About 0.7\% of the initial energy
+is lost, half of which is accounted for by hydrodynamic fluxes off the domain.
 
 \begin{figure}[h]
   \centering
@@ -3791,10 +3902,10 @@ complete disruption of the secondary is about three orbital periods.
 \end{figure}
 
 \autoref{fig:unsteady_gw_signal_unequal} shows the gravitational wave signal for this event. The
-signal has the expected characteristics for such an event: initially, the signal has a
-constant amplitude and an oscillation period equal to half the orbital frequency. As
-significant mass transfer sets in, the frequency increases because of rapid coalescence,
-and then the system eventually relaxes to an equilibrium (the ringdown phase). 
+signal has the expected characteristics for such an event when viewed perpendicular to the
+rotation axis: initially, the signal has a constant amplitude and an oscillation period equal
+to half the orbital frequency. As significant mass transfer sets in, the frequency increases
+because of rapid coalescence, and then the system eventually relaxes to an equilibrium (the ringdown phase). 
 
 \begin{figure}[h]
   \centering
@@ -3811,18 +3922,18 @@ and then the system eventually relaxes to an equilibrium (the ringdown phase).
 
 \clearpage
 \subsubsection{Equal Mass Merger}
-\label{sec:unstable:equal}
+\label{sec:mergers:unstable:equal}
 
-Equal-mass mergers are physically unlikely to occur, but are convenient for
-simulation purposes because of their symmetry, and are maximally unstable against
-mass transfer so they provide a limiting case for how violent the coalescence phase is.
+Equal-mass mergers are maximally unstable against mass transfer so they provide a
+limiting case for how violent the coalescence phase is.
 We use two $0.9\ \msolar$ mass stars for the simulation shown here, again with $f_R = 0.9$
-and an effective 200km resolution. The inertial frame evolution is displayed in
+and an effective 200 km resolution. The inertial frame evolution is displayed in
 \autoref{fig:unsteady_mass_transfer_equal_inertial} and the rotating frame evolution is
 displayed in \autoref{fig:unsteady_mass_transfer_equal_rotating}. The initial Keplerian
 orbital period for this system is 24 seconds, so the coalescence has essentially completed,
-leaving a single merged remnant, within two orbital periods. The corresponding gravitational
-wave signal is shown in \autoref{fig:unsteady_gw_signal_equal}.
+leaving a single merged remnant, within two orbital periods. The conservation properties
+are very similar to those discussed in \autoref{sec:mergers:unstable:unequal}. The
+corresponding gravitational wave signal is shown in \autoref{fig:unsteady_gw_signal_equal}.
 
 \begin{figure}[h]
   \centering
