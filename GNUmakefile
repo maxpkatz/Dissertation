@@ -31,6 +31,7 @@ pdf:	dissertation.pdf
 clean:
 	$(RM) $(pdf_source) *.dvi 
 	$(RM) *.blg *.log *.brf
+	$(RM) *.lof *.lot
 	$(RM) *.aux *.ps *.bbl
 	$(RM) *.pdf *.out
 	$(RM) *.toc
